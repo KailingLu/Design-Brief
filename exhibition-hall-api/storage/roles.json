@@ -1,0 +1,21 @@
+[
+  {
+    "_id": "1",
+    "name": "user",
+    "permissions": [
+      "read"
+    ],
+    "createdAt": "2026-03-27T07:33:28.847Z"
+  },
+  {
+    "_id": "2",
+    "name": "admin",
+    "permissions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "createdAt": "2026-03-27T07:33:28.847Z"
+  }
+]

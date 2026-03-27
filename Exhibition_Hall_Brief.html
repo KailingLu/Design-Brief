@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>展厅需求书编辑</title>
+<style>
+  :root {
+    --navy: #1a1a2e; --navy-mid: #2a2a4a; --gold: #e8c547;
+    --bg: #f2f1ed; --white: #ffffff;
+    --gray-100: #f7f7f5; --gray-200: #e8e8e4;
+    --gray-400: #b0b0a8; --gray-600: #6b6b65; --gray-800: #333330;
+    --green: #2e7d32; --green-light: #f0f8f0; --green-border: #81c784;
+    --amber-light: #fff8e1; --amber: #f59e0b;
+    --blue-light: #eff6ff; --blue-border: #93c5fd;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: var(--bg); color: var(--gray-800); min-height: 100vh; }
+
+  .site-header { background: var(--navy); border-bottom: 3px solid var(--gold); padding: 24px 48px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+  .header-tag { color: var(--gold); font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+  .header-title { color: var(--white); font-size: 26px; font-weight: 800; }
+  .header-subtitle { color: #8888aa; font-size: 12px; margin-top: 4px; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .progress-count { font-size: 34px; font-weight: 800; color: var(--gold); line-height: 1; text-align: right; }
+  .progress-count span { color: #555577; font-size: 17px; }
+  .progress-label { color: #8888aa; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+
+  .lang-toggle { display: flex; border-radius: 5px; overflow: hidden; border: 1.5px solid #444466; }
+  .lang-btn { padding: 5px 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; border: none; cursor: pointer; background: transparent; color: #8888aa; transition: all 0.15s; font-family: Arial, sans-serif; }
+  .lang-btn.active { background: var(--gold); color: var(--navy); }
+
+  .tab-nav { display: flex; gap: 2px; flex-wrap: wrap; }
+  .tab-btn { background: var(--navy-mid); color: #8888aa; border: none; padding: 9px 13px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 4px 4px 0 0; transition: all 0.15s; position: relative; font-family: Arial, sans-serif; }
+  .tab-btn:hover { background: #353560; color: #bbb; }
+  .tab-btn.active { background: var(--bg); color: var(--navy); }
+  .tab-btn.active::after { content:''; position:absolute; bottom:-3px; left:0; right:0; height:3px; background:var(--bg); }
+  .tab-btn .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#444466; margin-right:5px; vertical-align:middle; transition:background 0.2s; }
+  .tab-btn.filled .dot { background: var(--gold); }
+
+  .main { max-width: 900px; margin: 0 auto; padding: 40px 24px 100px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+
+  .section-title { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--navy); padding-bottom: 8px; border-bottom: 1.5px solid var(--navy); margin: 28px 0 18px; }
+  .section-title:first-child { margin-top: 0; }
+
+  .field-row { display: grid; gap: 16px; margin-bottom: 20px; }
+  .field-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .field-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .field-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+
+  label.field-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray-800); display: flex; align-items: center; gap: 6px; }
+  .required-badge { background: var(--navy); color: var(--gold); font-size: 7px; font-weight: 700; padding: 2px 5px; border-radius: 3px; letter-spacing: 1px; }
+  .field-hint { font-size: 11px; color: var(--gray-600); font-style: italic; line-height: 1.4; }
+
+  input[type="text"], input[type="date"], input[type="number"], textarea, select {
+    background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 6px;
+    padding: 10px 13px; font-family: Arial, sans-serif; font-size: 13px; color: var(--gray-800);
+    transition: border-color 0.15s; width: 100%; resize: vertical;
+  }
+  input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, textarea:focus, select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,26,46,0.08); }
+  textarea { min-height: 80px; line-height: 1.5; }
+  textarea.tall { min-height: 120px; }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b65' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .checkbox-item { display: flex; align-items: center; gap: 8px; background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 6px; padding: 8px 13px; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .checkbox-item:hover { border-color: var(--navy); }
+  .checkbox-item input[type="checkbox"] { display: none; }
+  .checkbox-item .box { width:16px; height:16px; border:1.5px solid var(--gray-400); border-radius:3px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; color:transparent; transition:all 0.15s; }
+  .checkbox-item input:checked ~ .box { background:var(--navy); border-color:var(--navy); color:var(--gold); }
+  .checkbox-item input:checked ~ .box::after { content:'✓'; }
+  .checkbox-item .check-label { font-size: 12.5px; }
+  .checkbox-item:has(input:checked) { border-color:var(--navy); background:#f0f0f8; }
+  .checkbox-item:has(input:checked) .check-label { font-weight: 600; }
+
+  .info-box { border-radius:8px; padding:16px 20px; margin-bottom:24px; border:1.5px solid; }
+  .info-box.amber { background:var(--amber-light); border-color:var(--amber); }
+  .info-box.green { background:var(--green-light); border-color:var(--green-border); }
+  .info-box.blue { background:var(--blue-light); border-color:var(--blue-border); }
+  .info-box-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+  .info-box.amber .info-box-title { color:#92400e; }
+  .info-box.green .info-box-title { color:var(--green); }
+  .info-box.blue .info-box-title { color:#1d4ed8; }
+  .info-box p { font-size:13px; line-height:1.6; }
+
+  /* Zone table */
+  .zone-table { width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px; }
+  .zone-table th { background:var(--navy); color:var(--gold); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; padding:10px 12px; text-align:left; font-weight:700; }
+  .zone-table td { padding:4px; border-bottom:1px solid var(--gray-200); vertical-align:top; }
+  .zone-table tr:nth-child(even) td { background:var(--gray-100); }
+  .zone-table input[type="text"], .zone-table select, .zone-table textarea { border:1px solid var(--gray-200); border-radius:4px; padding:7px 9px; font-size:12px; min-height:unset; width:100%; }
+  .zone-table textarea { min-height:52px; resize:vertical; }
+  .zone-num { background:var(--navy); color:var(--gold); font-size:11px; font-weight:700; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:6px auto; }
+  .add-row-btn { background:var(--white); border:1.5px dashed var(--gray-400); color:var(--gray-600); border-radius:6px; padding:10px; font-size:12px; font-weight:600; cursor:pointer; width:100%; transition:all 0.15s; font-family:Arial,sans-serif; }
+  .add-row-btn:hover { border-color:var(--navy); color:var(--navy); background:var(--gray-100); }
+  .remove-row { background:none; border:none; color:var(--gray-400); cursor:pointer; font-size:16px; padding:4px 8px; line-height:1; }
+  .remove-row:hover { color:#c0392b; }
+
+  /* Milestone timeline */
+  .milestone-row { display:grid; grid-template-columns:180px 1fr 140px; gap:12px; align-items:start; padding:12px 0; border-bottom:1px solid var(--gray-200); }
+  .milestone-row:last-child { border-bottom:none; }
+  .milestone-label { font-size:12px; font-weight:700; color:var(--navy); padding-top:11px; }
+  .milestone-badge { display:inline-block; background:var(--navy); color:var(--gold); font-size:8px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px; letter-spacing:1px; vertical-align:middle; }
+
+  .signoff-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; background:var(--green-light); border:1.5px solid var(--green-border); border-radius:10px; padding:20px; margin-top:24px; }
+  .signoff-role { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-bottom:8px; }
+
+  .revision-round { background:var(--white); border:1.5px solid var(--gray-200); border-radius:10px; overflow:hidden; margin-bottom:20px; }
+  .revision-round-header { background:var(--navy); padding:12px 20px; font-size:11px; font-weight:700; letter-spacing:2px; color:var(--gold); text-transform:uppercase; }
+  .revision-round-body { padding:20px; }
+
+  .nav-footer { display:flex; justify-content:space-between; align-items:center; margin-top:40px; padding-top:24px; border-top:1.5px solid var(--gray-200); }
+  .btn { padding:12px 24px; border-radius:6px; font-family:Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border:none; transition:all 0.15s; }
+  .btn-secondary { background:var(--white); border:1.5px solid var(--gray-200); color:var(--gray-600); }
+  .btn-secondary:hover { border-color:var(--navy); color:var(--navy); }
+  .btn-primary { background:var(--navy); color:var(--gold); }
+  .btn-primary:hover { background:#2a2a4e; }
+  .btn-print { background:var(--gold); color:var(--navy); }
+
+  #saveBar { position:fixed; bottom:0; left:0; right:0; background:var(--navy); border-top:2px solid var(--gold); padding:10px 32px; display:flex; align-items:center; justify-content:space-between; z-index:200; box-shadow:0 -4px 20px rgba(0,0,0,0.25); }
+
+  @media (max-width:640px) {
+    .field-row.cols-2,.field-row.cols-3,.field-row.cols-4 { grid-template-columns:1fr; }
+    .signoff-grid { grid-template-columns:1fr; }
+    .milestone-row { grid-template-columns:1fr; }
+    .site-header { padding:20px 16px 0; }
+    .main { padding:24px 16px 100px; }
+  }
+  @media print {
+    .site-header { position:static; }
+    .tab-btn,#saveBar { display:none; }
+    .tab-panel { display:block !important; page-break-before:always; }
+    .tab-panel:first-of-type { page-break-before:avoid; }
+    .nav-footer { display:none; }
+    body { background:white; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-top">
+    <div>
+      <div class="header-tag" data-en="Brand Department" data-zh="品牌部">Brand Department</div>
+      <div class="header-title" data-en="Exhibition Hall Brief" data-zh="展厅设计与建设简报">Exhibition Hall Brief</div>
+      <div class="header-subtitle" data-en="Complete all sections before design and construction begins. This document governs scope, approvals, and contractor handover." data-zh="请在设计及施工开始前填写所有内容，本文件约束项目范围、审批流程及承包商交接。">Complete all sections before design and construction begins.</div>
+    </div>
+    <div class="header-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="btnZH" onclick="setLang('zh')">中文</button>
+      </div>
+      <div>
+        <div class="progress-count" id="progressCount">0<span>/7</span></div>
+        <div class="progress-label" data-en="Sections Filled" data-zh="已填写章节">Sections Filled</div>
+      </div>
+      <div style="margin-top: 10px;">
+        <button class="btn btn-secondary" style="font-size: 10px; padding: 6px 12px;" onclick="backToMain()">返回主页</button>
+      </div>
+    </div>
+  </div>
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="basics" onclick="switchTab('basics')"><span class="dot"></span><span data-en="01 Project Basics" data-zh="01 项目基本信息">01 Project Basics</span></button>
+    <button class="tab-btn" data-tab="visitor" onclick="switchTab('visitor')"><span class="dot"></span><span data-en="02 Visitor & Objective" data-zh="02 访客与目标">02 Visitor &amp; Objective</span></button>
+    <button class="tab-btn" data-tab="space" onclick="switchTab('space')"><span class="dot"></span><span data-en="03 Space & Zones" data-zh="03 空间与分区">03 Space &amp; Zones</span></button>
+    <button class="tab-btn" data-tab="design" onclick="switchTab('design')"><span class="dot"></span><span data-en="04 Design Direction" data-zh="04 设计方向">04 Design Direction</span></button>
+    <button class="tab-btn" data-tab="content" onclick="switchTab('content')"><span class="dot"></span><span data-en="05 Content & AV" data-zh="05 内容与视听">05 Content &amp; AV</span></button>
+    <button class="tab-btn" data-tab="construction" onclick="switchTab('construction')"><span class="dot"></span><span data-en="06 Construction" data-zh="06 施工要求">06 Construction</span></button>
+    <button class="tab-btn" data-tab="budget" onclick="switchTab('budget')"><span class="dot"></span><span data-en="08 Budget & Cost Control" data-zh="08 预算与成本控制">08 Budget &amp; Cost Control</span></button>
+    <button class="tab-btn" data-tab="risk" onclick="switchTab('risk')"><span class="dot"></span><span data-en="09 Risk & Contingency" data-zh="09 风险与应急">09 Risk &amp; Contingency</span></button>
+    <button class="tab-btn" data-tab="safety" onclick="switchTab('safety')"><span class="dot"></span><span data-en="10 Safety & Compliance" data-zh="10 安全与合规">10 Safety &amp; Compliance</span></button>
+    <button class="tab-btn" data-tab="maintenance" onclick="switchTab('maintenance')"><span class="dot"></span><span data-en="11 Maintenance & Operations" data-zh="11 维护与运营">11 Maintenance &amp; Operations</span></button>
+    <button class="tab-btn" data-tab="delivery" onclick="switchTab('delivery')"><span class="dot"></span><span data-en="12 Delivery & Approval" data-zh="12 交付与审批">12 Delivery &amp; Approval</span></button>
+    <button class="tab-btn" data-tab="revisions" onclick="switchTab('revisions')"><span class="dot"></span><span data-en="Revision Log" data-zh="修改记录">Revision Log</span></button>
+  </nav>
+</header>
+
+<main class="main">
+
+<!-- ══ TAB 1: PROJECT BASICS ══ -->
+<section class="tab-panel active" id="tab-basics">
+  <div class="section-title" data-en="Project Information" data-zh="项目信息">Project Information</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label"><span data-en="Exhibition Hall Name / Project Title" data-zh="展厅名称 / 项目标题">Exhibition Hall Name / Project Title</span> <span class="required-badge" data-en="Required" data-zh="必填">Required</span></label>
+      <div class="field-hint" data-en="e.g. [Company] Global Headquarters Showroom / [City] Factory Visitor Centre / Product Innovation Exhibition Hall" data-zh="例：[公司]全球总部展厅 / [城市]工厂访客中心 / 产品创新展览厅">e.g. [Company] HQ Showroom / Factory Visitor Centre / Product Innovation Hall</div>
+      <input type="text" data-en-ph="Enter exhibition hall project name" data-zh-ph="请输入展厅项目名称" placeholder="Enter exhibition hall project name" data-section="basics">
+    </div>
+  </div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Requested By" data-zh="需求方">Requested By</label>
+      <div class="field-hint" data-en="Department and person name" data-zh="部门及姓名">Department and person name</div>
+      <input type="text" data-en-ph="e.g. Marketing Dept — Jane Smith" data-zh-ph="例：市场部 — 张三" placeholder="e.g. Marketing Dept — Jane Smith" data-section="basics">
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Brand Manager In Charge" data-zh="负责品牌经理">Brand Manager In Charge</label>
+      <input type="text" data-en-ph="Your name" data-zh-ph="你的姓名" placeholder="Your name" data-section="basics">
+    </div>
+  </div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Design Contractor" data-zh="设计承包商">Design Contractor</label>
+      <input type="text" data-en-ph="Design firm name or TBC" data-zh-ph="设计公司名称或待定" placeholder="Design firm name or TBC" data-section="basics">
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Construction Contractor" data-zh="施工承包商">Construction Contractor</label>
+      <input type="text" data-en-ph="Construction firm name or TBC" data-zh-ph="施工公司名称或待定" placeholder="Construction firm name or TBC" data-section="basics">
+    </div>
+  </div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Brief Date" data-zh="简报日期">Brief Date</label>
+      <input type="date" data-section="basics">
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Target Completion / Opening Date" data-zh="目标完工 / 开幕日期">Target Completion / Opening Date</label>
+      <input type="date" data-section="basics">
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Location & Physical Space" data-zh="地点与物理空间">Location &amp; Physical Space</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Address / Location" data-zh="地址 / 位置">Address / Location</label>
+      <input type="text" data-en-ph="e.g. Building A, Floor 1, [City] Factory Campus" data-zh-ph="例：A栋1楼，[城市]工厂园区" placeholder="e.g. Building A, Floor 1, [City] Factory Campus" data-section="basics">
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Total Floor Area" data-zh="总建筑面积">Total Floor Area</label>
+      <input type="text" data-en-ph="e.g. 500 m² / TBC after site survey" data-zh-ph="例：500平方米 / 现场勘察后确定" placeholder="e.g. 500 m² / TBC after site survey" data-section="basics">
+    </div>
+  </div>
+  <div class="field-row cols-3">
+    <div class="field-group">
+      <label class="field-label" data-en="Ceiling Height" data-zh="层高">Ceiling Height</label>
+      <input type="text" data-en-ph="e.g. 4.5 m" data-zh-ph="例：4.5米" placeholder="e.g. 4.5 m" data-section="basics">
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Space Type" data-zh="空间类型">Space Type</label>
+      <select data-section="basics">
+        <option value="" data-en="— Select —" data-zh="— 请选择 —">— Select —</option>
+        <option value="new" data-en="New build / blank shell" data-zh="新建 / 毛坯空间">New build / blank shell</option>
+        <option value="renovation" data-en="Renovation of existing space" data-zh="现有空间改造">Renovation of existing space</option>
+        <option value="refurbish" data-en="Refurbishment of existing hall" data-zh="现有展厅翻新">Refurbishment of existing hall</option>
+        <option value="temporary" data-en="Temporary / modular installation" data-zh="临时 / 模块化装置">Temporary / modular installation</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Total Budget (approx.)" data-zh="总预算（约）">Total Budget (approx.)</label>
+      <input type="text" data-en-ph="e.g. RMB 800,000 / USD 120,000" data-zh-ph="例：人民币80万 / 美元12万" placeholder="e.g. RMB 800,000 / USD 120,000" data-section="basics">
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Known Site Constraints" data-zh="已知场地限制">Known Site Constraints</label>
+      <div class="field-hint" data-en="Structural columns, low beams, fire exits, fixed plumbing, no-drill walls, noise restrictions, or anything that limits design freedom" data-zh="结构柱、低矮横梁、消防通道、固定管道、禁止打孔的墙面、噪音限制或其他影响设计自由度的因素">Structural columns, fire exits, no-drill walls, noise restrictions, anything limiting design freedom</div>
+      <textarea data-en-ph="e.g.&#10;- 2 structural columns in centre of space, cannot be removed&#10;- Fire exit on east wall must remain clear at all times (min. 1.2m clearance)&#10;- Ceiling load limit: 50 kg/m² — no heavy hanging structures&#10;- Building management: no drilling into external walls" data-zh-ph="例：&#10;- 空间中央有2根结构柱，无法拆除&#10;- 东墙消防通道须保持畅通（最小净宽1.2米）&#10;- 天花板承重限制：50千克/平方米——不可悬挂重型结构&#10;- 物业管理规定：外墙不得打孔" placeholder="e.g.&#10;- 2 structural columns in centre, cannot be removed&#10;- Fire exit on east wall must stay clear" data-section="basics"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Exhibition Hall Type" data-zh="展厅类型">Exhibition Hall Type</div>
+  <div class="checkbox-group">
+    <label class="checkbox-item"><input type="checkbox" data-section="basics"><span class="box"></span><span class="check-label" data-en="Corporate Showroom (customer-facing)" data-zh="企业展厅（面向客户）">Corporate Showroom (customer-facing)</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="basics"><span class="box"></span><span class="check-label" data-en="Factory / Production Visitor Centre" data-zh="工厂 / 生产访客中心">Factory / Production Visitor Centre</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="basics"><span class="box"></span><span class="check-label" data-en="Product Innovation / R&D Showcase" data-zh="产品创新 / 研发展示">Product Innovation / R&amp;D Showcase</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="basics"><span class="box"></span><span class="check-label" data-en="Brand Heritage / History Hall" data-zh="品牌历史 / 文化展厅">Brand Heritage / History Hall</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="basics"><span class="box"></span><span class="check-label" data-en="Trade Show / Event Booth" data-zh="展会 / 活动展台">Trade Show / Event Booth</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="basics"><span class="box"></span><span class="check-label" data-en="Internal Staff / Culture Hall" data-zh="内部员工 / 文化展厅">Internal Staff / Culture Hall</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="basics"><span class="box"></span><span class="check-label" data-en="Investor / Media Briefing Room" data-zh="投资者 / 媒体简报室">Investor / Media Briefing Room</span></label>
+  </div>
+
+  <div class="nav-footer">
+    <div></div>
+    <button class="btn btn-primary" onclick="switchTab('visitor')"><span data-en="Next: Visitor & Objective →" data-zh="下一步：访客与目标 →">Next: Visitor &amp; Objective →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 2: VISITOR & OBJECTIVE ══ -->
+<section class="tab-panel" id="tab-visitor">
+  <div class="section-title" data-en="Primary Visitors" data-zh="主要访客">Primary Visitors</div>
+  <div class="checkbox-group">
+    <label class="checkbox-item"><input type="checkbox" data-section="visitor"><span class="box"></span><span class="check-label" data-en="B2B Customers / Procurement Teams" data-zh="B2B客户 / 采购团队">B2B Customers / Procurement Teams</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="visitor"><span class="box"></span><span class="check-label" data-en="Investors / Board Members" data-zh="投资者 / 董事会成员">Investors / Board Members</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="visitor"><span class="box"></span><span class="check-label" data-en="Government / Regulatory Officials" data-zh="政府 / 监管机构人员">Government / Regulatory Officials</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="visitor"><span class="box"></span><span class="check-label" data-en="Media / Press" data-zh="媒体 / 记者">Media / Press</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="visitor"><span class="box"></span><span class="check-label" data-en="Internal Employees" data-zh="内部员工">Internal Employees</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="visitor"><span class="box"></span><span class="check-label" data-en="Academic / Research Partners" data-zh="学术 / 研究合作伙伴">Academic / Research Partners</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="visitor"><span class="box"></span><span class="check-label" data-en="General Public / Community" data-zh="大众 / 社区">General Public / Community</span></label>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Visitor Profile" data-zh="访客画像">Visitor Profile</label>
+      <div class="field-hint" data-en="Describe the typical visitor: background, seniority, technical knowledge, group size, and visit context" data-zh="描述典型访客：背景、职级、技术知识水平、团队规模及参观情境">Describe the typical visitor: seniority, technical knowledge, group size, and visit context</div>
+      <textarea data-en-ph="e.g. Primarily senior procurement and engineering managers from global tech companies. Groups of 3–8 people. Prior knowledge of the industry but not our specific products. Visits typically last 60–90 minutes and include a guided tour." data-zh-ph="例：主要为全球科技公司的高级采购和工程经理，3–8人小组参观。对行业有一定了解，但不熟悉我们的具体产品。参观通常持续60–90分钟，含导览。" placeholder="e.g. Senior procurement managers from global tech companies, groups of 3–8..." data-section="visitor"></textarea>
+    </div>
+  </div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Expected Visitor Volume" data-zh="预计访客量">Expected Visitor Volume</label>
+      <input type="text" data-en-ph="e.g. 5–10 groups per week / 2–3 per month" data-zh-ph="例：每周5–10个参观团 / 每月2–3个" placeholder="e.g. 5–10 groups per week" data-section="visitor">
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Guided or Self-guided?" data-zh="导览方式">Guided or Self-guided?</label>
+      <select data-section="visitor">
+        <option value="" data-en="— Select —" data-zh="— 请选择 —">— Select —</option>
+        <option value="guided" data-en="Always guided by staff" data-zh="始终由员工引导">Always guided by staff</option>
+        <option value="self" data-en="Fully self-guided" data-zh="完全自助参观">Fully self-guided</option>
+        <option value="both" data-en="Both options (design for both)" data-zh="两种方式均有（需兼顾设计）">Both options (design for both)</option>
+        <option value="hybrid" data-en="Guided with self-guided sections" data-zh="引导式参观含自助区域">Guided with self-guided sections</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Exhibition Objectives" data-zh="展厅目标">Exhibition Objectives</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label"><span data-en="Primary Objective" data-zh="核心目标">Primary Objective</span> <span class="required-badge" data-en="Required" data-zh="必填">Required</span></label>
+      <div class="field-hint" data-en="What should a visitor feel, believe, or decide after completing the tour? Write ONE clear sentence." data-zh="访客参观结束后，应该有何感受、认知或决定？请只写一句话。">What should a visitor feel or decide after the tour? ONE sentence only.</div>
+      <textarea data-en-ph="e.g. Visitors should leave with full confidence in our manufacturing capabilities and quality standards, and be ready to progress to contract negotiation." data-zh-ph="例：访客参观结束后，应对我们的制造能力和质量标准充分信任，并准备推进合同谈判。" placeholder="e.g. Visitors should leave with confidence in our manufacturing capabilities..." data-section="visitor"></textarea>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label"><span data-en="The 3 Key Messages Visitors Must Take Away" data-zh="访客必须带走的3个核心信息">The 3 Key Messages Visitors Must Take Away</span> <span class="required-badge" data-en="Required" data-zh="必填">Required</span></label>
+      <div class="field-hint" data-en="What 3 things must every visitor understand and remember? These drive zone design and content decisions." data-zh="每位访客必须理解并记住哪3件事？这些信息将驱动分区设计和内容决策。">What 3 things must every visitor understand? These drive zone design and content.</div>
+      <textarea data-en-ph="1. We are a global technology leader with [X] years of precision manufacturing expertise.&#10;2. Our quality control process exceeds international standards at every stage of production.&#10;3. We are a trusted long-term partner to the world's leading technology companies." data-zh-ph="1. 我们是拥有[X]年精密制造专业经验的全球技术领导者。&#10;2. 我们的质量控制流程在生产每个环节均超越国际标准。&#10;3. 我们是全球顶尖科技企业值得信赖的长期合作伙伴。" placeholder="1. We are a global technology leader with [X] years of expertise.&#10;2. Our quality process exceeds international standards.&#10;3. We are a trusted partner to world-leading companies." data-section="visitor"></textarea>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="What Currently Happens in This Visit? (if applicable)" data-zh="目前参观流程是什么？（如适用）">What Currently Happens in This Visit? (if applicable)</label>
+      <div class="field-hint" data-en="Describe the current visitor experience before this project. What works? What doesn't?" data-zh="描述本项目之前的访客参观体验。哪些环节效果好？哪些需要改进？">Describe the current visitor experience. What works? What doesn't?</div>
+      <textarea data-en-ph="e.g. Currently visitors are taken directly to a meeting room for a PowerPoint presentation, then a factory floor tour. Feedback is that the experience feels disconnected and does not showcase our technology advantage clearly." data-zh-ph="例：目前访客直接进入会议室听取PPT汇报，再参观工厂生产线。反馈显示体验割裂，无法清晰展示我们的技术优势。" placeholder="e.g. Currently visitors go to a meeting room for PPT, then factory tour. Experience feels disconnected..." data-section="visitor"></textarea>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('basics')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('space')"><span data-en="Next: Space & Zones →" data-zh="下一步：空间与分区 →">Next: Space &amp; Zones →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 3: SPACE & ZONES ══ -->
+<section class="tab-panel" id="tab-space">
+  <div class="info-box blue">
+    <div class="info-box-title" data-en="How to Use This Section" data-zh="如何使用本节">How to Use This Section</div>
+    <p data-en="Define each zone of the exhibition hall below — what it's called, its approximate size, its purpose, and what it must contain. These zones become the foundation of the design brief for the contractor." data-zh="请在下方定义展厅的每个功能区——名称、大致面积、用途及必须包含的内容。这些分区将成为设计承包商的核心简报基础。">Define each zone below. These zones become the foundation of the design brief for the contractor.</p>
+  </div>
+
+  <table class="zone-table" id="zoneTable">
+    <thead>
+      <tr>
+        <th style="width:36px;">#</th>
+        <th style="width:18%;" data-en="Zone Name" data-zh="区域名称">Zone Name</th>
+        <th style="width:12%;" data-en="Approx. Area" data-zh="大致面积">Approx. Area</th>
+        <th style="width:30%;" data-en="Purpose & Experience" data-zh="用途与体验">Purpose &amp; Experience</th>
+        <th style="width:30%;" data-en="Must-have Elements" data-zh="必须包含的元素">Must-have Elements</th>
+        <th style="width:32px;"></th>
+      </tr>
+    </thead>
+    <tbody id="zoneRows"></tbody>
+  </table>
+  <button class="add-row-btn" onclick="addZone()">＋ <span data-en="Add Zone" data-zh="添加区域">Add Zone</span></button>
+
+  <div class="section-title" style="margin-top:28px;" data-en="Visitor Flow" data-zh="访客流线">Visitor Flow</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Intended Visitor Journey" data-zh="预设访客参观路线">Intended Visitor Journey</label>
+      <div class="field-hint" data-en="Describe the sequence visitors should move through the hall, from entry to exit. Include any decision points or optional paths." data-zh="描述访客从入口到出口的参观顺序，包括任何分叉点或可选路径。">Describe the sequence visitors move through from entry to exit.</div>
+      <textarea data-en-ph="e.g. Entry → Welcome Zone (2 min) → Company Overview Zone (5 min) → Technology Showcase (10 min) → Product Display (10 min) → Interactive Demo Area (10 min) → Meeting / Closing Room (30 min)" data-zh-ph="例：入口→欢迎区（2分钟）→公司概览区（5分钟）→技术展示区（10分钟）→产品展示区（10分钟）→互动体验区（10分钟）→会议/总结室（30分钟）" placeholder="e.g. Entry → Welcome Zone (2 min) → Company Overview (5 min) → Technology Showcase (10 min)..." data-section="space"></textarea>
+    </div>
+  </div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Floor Plan / Site Drawing Available?" data-zh="是否有平面图 / 场地图纸？">Floor Plan / Site Drawing Available?</label>
+      <select data-section="space">
+        <option value="" data-en="— Select —" data-zh="— 请选择 —">— Select —</option>
+        <option value="yes_cad" data-en="Yes — CAD file available" data-zh="有——CAD文件可提供">Yes — CAD file available</option>
+        <option value="yes_pdf" data-en="Yes — PDF drawing available" data-zh="有——PDF图纸可提供">Yes — PDF drawing available</option>
+        <option value="yes_photo" data-en="Yes — photos only" data-zh="有——仅有照片">Yes — photos only</option>
+        <option value="no_survey" data-en="No — site survey required" data-zh="没有——需进行现场勘察">No — site survey required</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Site Survey Arranged?" data-zh="是否已安排现场勘察？">Site Survey Arranged?</label>
+      <select data-section="space">
+        <option value="">— Select —</option>
+        <option value="yes" data-en="Yes — date confirmed" data-zh="是——日期已确认">Yes — date confirmed</option>
+        <option value="pending" data-en="Pending — to be scheduled" data-zh="待安排——尚未确定">Pending — to be scheduled</option>
+        <option value="no" data-en="Not required" data-zh="不需要">Not required</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('visitor')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('design')"><span data-en="Next: Design Direction →" data-zh="下一步：设计方向 →">Next: Design Direction →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 4: DESIGN DIRECTION ══ -->
+<section class="tab-panel" id="tab-design">
+  <div class="section-title" data-en="Overall Aesthetic Direction" data-zh="整体美学方向">Overall Aesthetic Direction</div>
+  <div class="checkbox-group">
+    <label class="checkbox-item"><input type="checkbox" data-section="design"><span class="box"></span><span class="check-label" data-en="Premium / Luxury" data-zh="高端 / 奢华">Premium / Luxury</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="design"><span class="box"></span><span class="check-label" data-en="High-tech / Futuristic" data-zh="高科技 / 未来感">High-tech / Futuristic</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="design"><span class="box"></span><span class="check-label" data-en="Clean / Minimal / Scandinavian" data-zh="简洁 / 极简 / 北欧风">Clean / Minimal / Scandinavian</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="design"><span class="box"></span><span class="check-label" data-en="Industrial / Raw / Honest" data-zh="工业风 / 原始感 / 真实感">Industrial / Raw / Honest</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="design"><span class="box"></span><span class="check-label" data-en="Warm / Natural / Inviting" data-zh="温暖 / 自然 / 亲切">Warm / Natural / Inviting</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="design"><span class="box"></span><span class="check-label" data-en="Bold / Graphic / Statement-making" data-zh="大胆 / 图形感 / 强烈视觉冲击">Bold / Graphic / Statement-making</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="design"><span class="box"></span><span class="check-label" data-en="Classic / Authoritative / Institutional" data-zh="经典 / 权威 / 机构感">Classic / Authoritative / Institutional</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="design"><span class="box"></span><span class="check-label" data-en="Immersive / Experiential" data-zh="沉浸式 / 体验感">Immersive / Experiential</span></label>
+  </div>
+
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Color Direction" data-zh="色彩方向">Color Direction</label>
+      <div class="field-hint" data-en="Primary, secondary, and accent colors. Reference brand guidelines version." data-zh="主色、辅色及点缀色，注明品牌规范版本。">Primary, secondary, and accent colors. Reference brand guidelines version.</div>
+      <textarea data-en-ph="e.g. Primary walls: brand navy (#1A1A2E). Feature wall: gold (#E8C547). Floors: light grey concrete finish. All colors per Brand Guidelines v[X.X]." data-zh-ph="例：主墙面：品牌深蓝色（#1A1A2E）。主题墙：金色（#E8C547）。地面：浅灰色混凝土质感。所有颜色参照品牌规范v[X.X]。" placeholder="e.g. Primary: brand navy. Feature wall: gold. Floors: light grey concrete." data-section="design"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Materials Direction" data-zh="材料方向">Materials Direction</label>
+      <div class="field-hint" data-en="Preferred finishes for walls, floors, furniture, and display structures" data-zh="墙面、地面、家具及展示结构的首选材料与工艺">Preferred finishes for walls, floors, furniture, display structures</div>
+      <textarea data-en-ph="e.g. Walls: brushed aluminium panels + backlit frosted glass. Floor: polished concrete or large-format grey tile. Furniture: dark oak + black steel. Display plinths: white matte lacquer." data-zh-ph="例：墙面：拉丝铝板 + 背光磨砂玻璃。地面：抛光混凝土或大尺寸灰色瓷砖。家具：深色橡木 + 黑色钢材。展台：哑光白色烤漆。" placeholder="e.g. Walls: brushed aluminium + backlit glass. Floor: polished concrete." data-section="design"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Lighting Direction" data-zh="灯光方向">Lighting Direction</label>
+      <div class="field-hint" data-en="Overall lighting mood and any specific requirements per zone" data-zh="整体灯光氛围及各分区的具体灯光要求">Overall lighting mood and any zone-specific requirements</div>
+      <textarea data-en-ph="e.g. General: warm-white ambient lighting (3000K). Product displays: adjustable cool-white spotlights (4000K). Feature wall: integrated LED backlight. No fluorescent strip lights." data-zh-ph="例：整体：暖白色环境照明（3000K）。产品展示：可调冷白色射灯（4000K）。主题墙：内置LED背光。不使用荧光灯管。" placeholder="e.g. Ambient: warm-white 3000K. Product displays: cool-white spotlights 4000K." data-section="design"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Typography & Signage Direction" data-zh="字体与标识方向">Typography &amp; Signage Direction</label>
+      <div class="field-hint" data-en="Fonts, text sizes, and signage style for all in-hall text elements" data-zh="展厅内所有文字元素的字体、字号及标识风格">Fonts, sizes, and signage style for all in-hall text</div>
+      <textarea data-en-ph="e.g. All text uses brand font (Arial). Zone headers: large format white on dark background. Wayfinding: gold directional icons on dark panels. All text min. 24pt for legibility at 2m distance." data-zh-ph="例：所有文字使用品牌字体（Arial）。区域标题：深色背景上的大号白色字体。导视系统：深色面板上的金色方向图标。所有文字最小24pt，确保在2米距离内清晰可读。" placeholder="e.g. All text: brand font. Zone headers: white on dark. Min. 24pt at 2m distance." data-section="design"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Design References / Inspiration" data-zh="设计参考 / 灵感来源">Design References / Inspiration</label>
+      <div class="field-hint" data-en="Links, images, or descriptions of exhibition halls, showrooms, or spaces that show the right direction" data-zh="能体现正确方向的展厅、展示空间的链接、图片或描述">Links, images, or descriptions of spaces that show the right direction</div>
+      <textarea class="tall" data-en-ph="e.g.&#10;- Company X showroom in [City] — visited in [year], liked the use of backlit product display walls and minimal text&#10;- https://[link] — reference for lighting approach&#10;- https://[link] — reference for material palette&#10;- Previous hall at [Location] — our own benchmark, maintain or exceed this standard" data-zh-ph="例：&#10;- [城市]X公司展厅——[年份]参观，喜欢背光产品展示墙和简洁的文字风格&#10;- https://[链接]——灯光方案参考&#10;- https://[链接]——材料搭配参考&#10;- [地点]现有展厅——我们自己的基准，需维持或超越此标准" placeholder="e.g.&#10;- Company X showroom in [City] — liked the backlit product walls&#10;- https://[link] — reference for lighting&#10;- Previous hall at [Location] — our benchmark" data-section="design"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Design Direction to Avoid" data-zh="需要避免的设计风格">Design Direction to Avoid</label>
+      <textarea data-en-ph="e.g. Avoid overly dark, cave-like spaces. No carpet flooring. Avoid cluttered or busy display arrangements — less is more. Do not use generic office furniture." data-zh-ph="例：避免过于昏暗、洞穴感的空间。不使用地毯。避免杂乱拥挤的展示布局——少即是多。不使用通用办公家具。" placeholder="e.g. Avoid overly dark spaces. No carpet. Avoid cluttered display arrangements." data-section="design"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Mandatory Brand Elements" data-zh="必须呈现的品牌元素">Mandatory Brand Elements</label>
+      <div class="field-hint" data-en="Logos, taglines, brand imagery, or visual identity elements that must appear and how they should be applied" data-zh="必须出现的Logo、标语、品牌图像或视觉识别元素，以及它们的应用方式">Logos, taglines, brand imagery that must appear and how they should be applied</div>
+      <textarea data-en-ph="e.g.&#10;- Company logo: entrance feature wall, minimum 600mm height&#10;- Brand tagline '[Tagline]': entrance wall beneath logo&#10;- Global office location map: Company Overview zone&#10;- Brand Guidelines v[X.X] must be followed for all logo and color applications" data-zh-ph="例：&#10;- 公司Logo：入口主题墙，最小高度600毫米&#10;- 品牌标语[标语]：入口墙Logo下方&#10;- 全球办公室位置地图：公司概览区&#10;- 所有Logo及色彩应用须符合品牌规范v[X.X]" placeholder="e.g.&#10;- Company logo: entrance wall, min. 600mm height&#10;- Brand tagline: beneath logo&#10;- Brand Guidelines v[X.X] must be followed" data-section="design"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Technical Specifications" data-zh="技术规格要求">Technical Specifications</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Technical System Requirements" data-zh="技术系统要求">Technical System Requirements</label>
+      <div class="field-hint" data-en="Smart building systems, integration requirements, and technical infrastructure needs" data-zh="智能建筑系统、集成要求和技术基础设施需求">Smart building systems, integration requirements, and technical infrastructure</div>
+      <textarea data-en-ph="e.g.&#10;- Building Management System (BMS) integration for lighting and HVAC control&#10;- Wi-Fi coverage throughout the hall with dedicated SSID for visitors&#10;- Security system integration (CCTV, access control)&#10;- IoT sensors for occupancy and environmental monitoring&#10;- Digital signage system with central content management" data-zh-ph="例：&#10;- 建筑管理系统（BMS）集成，用于灯光和暖通控制&#10;- 展厅全覆盖Wi-Fi，为访客提供专用SSID&#10;- 安全系统集成（监控、门禁）&#10;- 物联网传感器用于占用和环境监测&#10;- 数字标牌系统，带中央内容管理" placeholder="e.g.&#10;- Building Management System integration&#10;- Wi-Fi coverage with dedicated SSID&#10;- Security system integration" data-section="design"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Design Standards & Codes" data-zh="设计标准与规范">Design Standards &amp; Codes</label>
+      <div class="field-hint" data-en="Relevant design standards, building codes, and industry regulations" data-zh="相关设计标准、建筑规范和行业法规">Relevant design standards, building codes, and industry regulations</div>
+      <textarea data-en-ph="e.g.&#10;- National Building Code of [Country]&#10;- Fire safety regulations (NFPA 101 or local equivalent)&#10;- Accessibility standards (ADA or local equivalent)&#10;- Energy efficiency standards (LEED or local equivalent)&#10;- AV system design standards (INFOCOMM)" data-zh-ph="例：&#10;- [国家]建筑规范&#10;- 消防安全法规（NFPA 101或当地等效标准）&#10;- 无障碍标准（ADA或当地等效标准）&#10;- 能源效率标准（LEED或当地等效标准）&#10;- 视听系统设计标准（INFOCOMM）" placeholder="e.g.&#10;- National Building Code&#10;- Fire safety regulations&#10;- Accessibility standards" data-section="design"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Sustainability Requirements" data-zh="可持续性要求">Sustainability Requirements</label>
+      <div class="field-hint" data-en="Green building practices, energy efficiency, and environmental considerations" data-zh="绿色建筑实践、能源效率和环境考虑因素">Green building practices, energy efficiency, and environmental considerations</div>
+      <textarea data-en-ph="e.g.&#10;- Energy-efficient LED lighting throughout&#10;- Use of recycled and low-VOC materials&#10;- Water-saving fixtures where applicable&#10;- Natural lighting optimization&#10;- Waste reduction plan during construction" data-zh-ph="例：&#10;- 全厅使用节能LED照明&#10;- 使用回收和低VOC材料&#10;- 适用处安装节水装置&#10;- 优化自然采光&#10;- 施工期间的废物减少计划" placeholder="e.g.&#10;- Energy-efficient LED lighting&#10;- Use of recycled materials&#10;- Water-saving fixtures" data-section="design"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Smart Hall Features" data-zh="智能展厅功能">Smart Hall Features</label>
+      <div class="field-hint" data-en="Interactive elements, digital experiences, and smart technologies" data-zh="互动元素、数字体验和智能技术">Interactive elements, digital experiences, and smart technologies</div>
+      <textarea data-en-ph="e.g.&#10;- Visitor tracking and analytics system&#10;- Personalized content delivery based on visitor profile&#10;- Mobile app integration for self-guided tours&#10;- Real-time occupancy monitoring&#10;- Smart wayfinding system" data-zh-ph="例：&#10;- 访客跟踪和分析系统&#10;- 基于访客画像的个性化内容推送&#10;- 移动应用集成，用于自助导览&#10;- 实时占用监测&#10;- 智能导视系统" placeholder="e.g.&#10;- Visitor tracking system&#10;- Personalized content delivery&#10;- Mobile app integration" data-section="design"></textarea>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('space')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('content')"><span data-en="Next: Content & AV →" data-zh="下一步：内容与视听 →">Next: Content &amp; AV →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 5: CONTENT & AV ══ -->
+<section class="tab-panel" id="tab-content">
+  <div class="section-title" data-en="Content Strategy" data-zh="内容策略">Content Strategy</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label"><span data-en="Key Content Topics by Zone" data-zh="各区域核心内容主题">Key Content Topics by Zone</span> <span class="required-badge" data-en="Required" data-zh="必填">Required</span></label>
+      <div class="field-hint" data-en="For each zone defined in Section 03, describe what content will be communicated and what facts, stories, or data must be included" data-zh="针对第03节中定义的每个分区，描述将传达的内容以及必须包含的事实、故事或数据">For each zone, describe what content is communicated and what facts/data must be included</div>
+      <textarea class="tall" data-en-ph="e.g.&#10;Zone 1 — Welcome: Company name, founding year, global headquarters. First impression should be confident and premium.&#10;Zone 2 — Company Overview: [X] years history, [X] global locations, [X] employees, key milestones timeline, revenue/growth if approved.&#10;Zone 3 — Technology: Core technology differentiation, patent count, R&D investment %, key technical achievements.&#10;Zone 4 — Products: Product family overview, key specs, application industries, certifications." data-zh-ph="例：&#10;第1区——欢迎区：公司名称、成立年份、全球总部。第一印象应体现自信与高端。&#10;第2区——公司概览：[X]年历史、[X]个全球站点、[X]名员工、关键里程碑时间轴、经审批的营收/增长数据。&#10;第3区——技术展示：核心技术差异化、专利数量、研发投入比例、关键技术成就。&#10;第4区——产品展示：产品系列概览、核心规格参数、应用行业、认证资质。" placeholder="e.g.&#10;Zone 1 — Welcome: Company name, founding year, global HQ.&#10;Zone 2 — Company Overview: [X] years history, [X] locations, key milestones." data-section="content"></textarea>
+    </div>
+  </div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Languages Required" data-zh="所需语言">Languages Required</label>
+      <div class="field-hint" data-en="All languages that must appear on physical panels, screens, and interactive elements" data-zh="实体展板、屏幕及互动装置上必须出现的所有语言">All languages on panels, screens, and interactive elements</div>
+      <input type="text" data-en-ph="e.g. English + Simplified Chinese. Key panels also in [language]." data-zh-ph="例：英语 + 简体中文。核心展板同时包含[语言]。" placeholder="e.g. English + Simplified Chinese" data-section="content">
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Who Writes the Content?" data-zh="谁负责撰写内容？">Who Writes the Content?</label>
+      <select data-section="content">
+        <option value="" data-en="— Select —" data-zh="— 请选择 —">— Select —</option>
+        <option value="internal" data-en="Brand team (internal)" data-zh="品牌团队（内部）">Brand team (internal)</option>
+        <option value="contractor" data-en="Design contractor provides draft" data-zh="设计承包商提供初稿">Design contractor provides draft</option>
+        <option value="agency" data-en="External copywriter / agency" data-zh="外部文案 / 代理公司">External copywriter / agency</option>
+        <option value="split" data-en="Split — brand team + contractor" data-zh="分工——品牌团队 + 承包商">Split — brand team + contractor</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Product & Physical Displays" data-zh="产品与实物展示">Product &amp; Physical Displays</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Products / Objects to Display" data-zh="展示产品 / 实物">Products / Objects to Display</label>
+      <div class="field-hint" data-en="List all physical products, samples, or objects to be displayed. Include dimensions, weight, and any special requirements." data-zh="列出所有需展示的实物产品、样品或物件，包括尺寸、重量及特殊要求。">List all physical products and samples. Include dimensions, weight, special requirements.</div>
+      <textarea data-en-ph="e.g.&#10;- Product A: [model], dimensions [W×D×H mm], weight [kg]. Needs pedestal display with lighting. Qty: 3&#10;- Product B: cross-section cutaway model, fragile, must be behind glass. Qty: 1&#10;- Archive product (historical): for Heritage zone display case only. Qty: 2" data-zh-ph="例：&#10;- 产品A：[型号]，尺寸[宽×深×高毫米]，重量[千克]。需带灯光展台。数量：3件&#10;- 产品B：截面剖切模型，易碎，须置于玻璃罩内。数量：1件&#10;- 历史存档产品：仅用于品牌历史区展示柜。数量：2件" placeholder="e.g.&#10;- Product A: [model], [W×D×H mm], [kg]. Needs pedestal + lighting. Qty: 3&#10;- Product B: cutaway model, behind glass. Qty: 1" data-section="content"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Audio-Visual & Technology" data-zh="视听设备与技术">Audio-Visual &amp; Technology</div>
+  <div class="checkbox-group">
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="LED video wall" data-zh="LED视频墙">LED video wall</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="Large display screens (55″+)" data-zh="大尺寸展示屏（55寸以上）">Large display screens (55″+)</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="Interactive touchscreen kiosks" data-zh="互动触摸屏终端">Interactive touchscreen kiosks</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="Projection mapping" data-zh="投影映射">Projection mapping</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="VR / AR experience" data-zh="VR / AR 体验">VR / AR experience</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="Ambient audio / soundscape" data-zh="环境音效 / 声景">Ambient audio / soundscape</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="Presentation / meeting AV system" data-zh="演示 / 会议视听系统">Presentation / meeting AV system</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="Real-time data / live dashboard" data-zh="实时数据 / 动态数据看板">Real-time data / live dashboard</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="Motorised / kinetic display elements" data-zh="电动 / 动态展示装置">Motorised / kinetic display elements</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="content"><span class="box"></span><span class="check-label" data-en="Transparent / smart glass" data-zh="透明 / 智能玻璃">Transparent / smart glass</span></label>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="AV & Technology Requirements Detail" data-zh="视听设备与技术要求详情">AV &amp; Technology Requirements Detail</label>
+      <div class="field-hint" data-en="For each AV or technology element selected above, describe its location, size, content, and technical requirements" data-zh="针对上方选择的每项视听或技术设备，描述其位置、尺寸、内容及技术要求">For each AV element, describe location, size, content, and technical requirements</div>
+      <textarea class="tall" data-en-ph="e.g.&#10;LED video wall: Technology Zone, approx. 4m×2m, to show looping brand film and product animation. Must support 4K content.&#10;Touchscreen kiosks: 2× in Product Zone, 55″ portrait orientation, for interactive product catalogue and spec comparison.&#10;Presentation screen: Meeting Room, 86″ display, connected to laptop/wireless presentation system." data-zh-ph="例：&#10;LED视频墙：技术区，约4米×2米，循环播放品牌影片和产品动画，须支持4K内容。&#10;触摸屏终端：产品区2台，55寸竖屏，用于交互式产品目录和规格对比。&#10;演示屏：会议室，86寸显示屏，连接笔记本电脑/无线演示系统。" placeholder="e.g.&#10;LED video wall: Technology Zone, 4m×2m, looping brand film, 4K support required.&#10;Touchscreen kiosks: 2× in Product Zone, 55″ portrait, interactive catalogue." data-section="content"></textarea>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Content to Be Produced for Screens" data-zh="需为屏幕制作的内容">Content to Be Produced for Screens</label>
+      <div class="field-hint" data-en="List all digital content that needs to be created: videos, animations, interactive applications, data dashboards. Note who is responsible for each." data-zh="列出需要制作的所有数字内容：视频、动画、交互应用、数据看板，并注明各项负责方。">List all digital content to be created and who is responsible for each.</div>
+      <textarea data-en-ph="e.g.&#10;- Brand overview film (3 min): produced separately via Video Brief. Brand team responsible.&#10;- Product animation x3: contractor to produce from brand-provided CAD files.&#10;- Interactive product catalogue: contractor to develop, content provided by Product team.&#10;- Real-time production data dashboard: IT team to develop, display only." data-zh-ph="例：&#10;- 品牌概览影片（3分钟）：通过视频简报单独制作，品牌团队负责。&#10;- 产品动画×3：承包商根据品牌方提供的CAD文件制作。&#10;- 交互式产品目录：承包商开发，内容由产品团队提供。&#10;- 实时生产数据看板：IT团队开发，仅用于展示。" placeholder="e.g.&#10;- Brand film (3 min): Brand team responsible.&#10;- Product animation ×3: contractor produces from CAD files.&#10;- Interactive catalogue: contractor develops, Product team provides content." data-section="content"></textarea>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('design')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('construction')"><span data-en="Next: Construction →" data-zh="下一步：施工要求 →">Next: Construction →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 6: CONSTRUCTION ══ -->
+<section class="tab-panel" id="tab-construction">
+  <div class="info-box amber">
+    <div class="info-box-title" data-en="⚠ Construction Scope Note" data-zh="⚠ 施工范围说明">⚠ Construction Scope Note</div>
+    <p data-en="All structural, electrical, plumbing, and fire safety work must comply with local building codes and obtain required permits before construction begins. The brand team is responsible for design intent — the contractor is responsible for structural safety and compliance." data-zh="所有结构、电气、管道及消防安全工程须符合当地建筑规范，并在施工前取得必要许可。品牌团队负责设计意图，承包商负责结构安全及合规性。">All structural, electrical, and fire safety work must comply with local building codes and obtain permits. Brand team owns design intent; contractor owns structural safety and compliance.</p>
+  </div>
+
+  <div class="section-title" data-en="Construction Scope" data-zh="施工范围">Construction Scope</div>
+  <div class="checkbox-group">
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Partition walls / dividers" data-zh="隔断墙 / 隔断">Partition walls / dividers</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Flooring (new)" data-zh="地面铺装（新建）">Flooring (new)</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Ceiling (new / modification)" data-zh="天花板（新建 / 改造）">Ceiling (new / modification)</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Electrical / power points" data-zh="电气 / 插座">Electrical / power points</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Lighting installation" data-zh="灯光安装">Lighting installation</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="AV cabling & installation" data-zh="视听线路及设备安装">AV cabling &amp; installation</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Network / data cabling" data-zh="网络 / 数据线路">Network / data cabling</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Custom millwork / joinery" data-zh="定制木工 / 细木工">Custom millwork / joinery</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Wall graphics / vinyl / printing" data-zh="墙面图文 / 贴膜 / 印刷">Wall graphics / vinyl / printing</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Product display plinths / cases" data-zh="产品展台 / 展柜">Product display plinths / cases</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Signage & wayfinding" data-zh="标识 / 导视系统">Signage &amp; wayfinding</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Furniture supply & installation" data-zh="家具采购及安装">Furniture supply &amp; installation</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="HVAC / ventilation modifications" data-zh="暖通空调 / 通风改造">HVAC / ventilation modifications</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Fire safety system modifications" data-zh="消防系统改造">Fire safety system modifications</span></label>
+    <label class="checkbox-item"><input type="checkbox" data-section="construction"><span class="box"></span><span class="check-label" data-en="Demolition of existing elements" data-zh="拆除现有设施">Demolition of existing elements</span></label>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Construction Constraints & Requirements" data-zh="施工限制与要求">Construction Constraints &amp; Requirements</label>
+      <div class="field-hint" data-en="Working hours restrictions, noise limits, access limitations, building management rules, or any other site-specific constraints" data-zh="施工时间限制、噪音限制、通道限制、物业管理规定或其他场地特定限制条件">Working hours, noise limits, access limitations, building management rules</div>
+      <textarea data-en-ph="e.g.&#10;- Construction hours: Monday–Friday 08:00–18:00 only. No weekend work without prior approval.&#10;- Noisy work (drilling, cutting) permitted only during lunch break (12:00–13:30) and after 17:00.&#10;- All materials must enter via service entrance (Building C, west side). No goods lift usage 08:30–09:30 and 17:30–18:30.&#10;- Building management requires permit for any work involving electrical or ceiling systems." data-zh-ph="例：&#10;- 施工时间：周一至周五08:00–18:00，周末施工需提前审批。&#10;- 噪声较大的工序（钻孔、切割）仅可在午休（12:00–13:30）及17:00后进行。&#10;- 所有物料须从货运通道进入（C栋西侧），货梯08:30–09:30及17:30–18:30期间不可使用。&#10;- 涉及电气或天花板系统的施工须向物业申请许可。" placeholder="e.g.&#10;- Construction hours: Mon–Fri 08:00–18:00 only.&#10;- Noisy work only during lunch and after 17:00.&#10;- Materials via service entrance only." data-section="construction"></textarea>
+    </div>
+  </div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Durability Requirement" data-zh="耐久性要求">Durability Requirement</label>
+      <div class="field-hint" data-en="Expected lifespan of the installation before next refurbishment" data-zh="预计在下次翻新前的使用年限">Expected lifespan before next refurbishment</div>
+      <select data-section="construction">
+        <option value="">— Select —</option>
+        <option value="2" data-en="2 years (temporary / light-use)" data-zh="2年（临时 / 轻度使用）">2 years (temporary / light-use)</option>
+        <option value="5" data-en="5 years (standard)" data-zh="5年（标准）">5 years (standard)</option>
+        <option value="10" data-en="10 years (high-quality / permanent)" data-zh="10年（高品质 / 永久性）">10 years (high-quality / permanent)</option>
+        <option value="tbd" data-en="To be determined" data-zh="待定">To be determined</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Maintenance Access Requirements" data-zh="维护通道要求">Maintenance Access Requirements</label>
+      <div class="field-hint" data-en="What ongoing maintenance will be needed and how should the design accommodate it?" data-zh="后续维护内容是什么？设计应如何为其预留条件？">What ongoing maintenance is needed? How should design accommodate it?</div>
+      <textarea data-en-ph="e.g. Screen and lighting elements must be accessible for replacement without demolition. Display plinths should be on castors for repositioning." data-zh-ph="例：屏幕和灯光元件须可在不拆除的情况下更换。展台应安装脚轮以便重新布置。" placeholder="e.g. Screens must be accessible for replacement without demolition." data-section="construction"></textarea>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Handover Requirements" data-zh="交付要求">Handover Requirements</label>
+      <div class="field-hint" data-en="What documentation, training, warranties, and as-built drawings must the contractor provide at handover?" data-zh="承包商在交付时须提供哪些文件、培训、质保及竣工图纸？">What documentation, training, warranties, and as-built drawings must the contractor provide?</div>
+      <textarea data-en-ph="e.g.&#10;- As-built drawings (CAD + PDF) for all structural, electrical, and AV elements&#10;- Operating manual for all AV and interactive systems&#10;- Contractor to provide on-site training session for building management team&#10;- Warranties: structure 2 years, electrical 1 year, AV equipment per manufacturer" data-zh-ph="例：&#10;- 所有结构、电气及视听系统的竣工图纸（CAD + PDF）&#10;- 所有视听及互动系统的操作手册&#10;- 承包商须为物业管理团队提供现场培训&#10;- 质保：结构2年，电气1年，视听设备按制造商标准" placeholder="e.g.&#10;- As-built drawings (CAD + PDF) for all systems&#10;- Operating manuals for all AV systems&#10;- On-site training for building management team" data-section="construction"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Construction Management" data-zh="施工管理">Construction Management</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Construction Schedule Management" data-zh="施工进度管理">Construction Schedule Management</label>
+      <div class="field-hint" data-en="Detailed construction timeline, milestones, and progress reporting requirements" data-zh="详细的施工时间表、里程碑和进度报告要求">Detailed construction timeline, milestones, and progress reporting requirements</div>
+      <textarea data-en-ph="e.g.&#10;- Weekly progress reports with photos and status updates&#10;- Bi-weekly project meetings with key stakeholders&#10;- Critical path method (CPM) schedule with dependencies&#10;- Milestone completion dates and review points&#10;- Contingency plan for schedule delays" data-zh-ph="例：&#10;- 每周进度报告，包含照片和状态更新&#10;- 每两周与关键 stakeholders 举行项目会议&#10;- 关键路径法（CPM）进度计划，包含依赖关系&#10;- 里程碑完成日期和审查点&#10;- 进度延误的应急计划" placeholder="e.g.&#10;- Weekly progress reports with photos&#10;- Bi-weekly project meetings&#10;- Critical path method schedule" data-section="construction"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Quality Control & Assurance" data-zh="质量控制与保证">Quality Control &amp; Assurance</label>
+      <div class="field-hint" data-en="Quality standards, inspection procedures, and quality assurance measures" data-zh="质量标准、检验程序和质量保证措施">Quality standards, inspection procedures, and quality assurance measures</div>
+      <textarea data-en-ph="e.g.&#10;- ISO 9001 quality management system implementation&#10;- Pre-construction quality planning and documentation&#10;- In-process quality inspections at key stages&#10;- Final quality audit before handover&#10;- Defect rectification process and timeline" data-zh-ph="例：&#10;- 实施ISO 9001质量管理体系&#10;- 施工前质量规划和文档编制&#10;- 关键阶段的过程中质量检验&#10;- 交付前的最终质量审计&#10;- 缺陷整改流程和时间表" placeholder="e.g.&#10;- ISO 9001 quality management system&#10;- In-process quality inspections&#10;- Final quality audit before handover" data-section="construction"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Site Safety Management" data-zh="现场安全管理">Site Safety Management</label>
+      <div class="field-hint" data-en="Safety protocols, risk assessments, and emergency procedures" data-zh="安全协议、风险评估和应急程序">Safety protocols, risk assessments, and emergency procedures</div>
+      <textarea data-en-ph="e.g.&#10;- Comprehensive site safety plan with risk assessments&#10;- Daily safety briefings for all workers&#10;- Personal protective equipment (PPE) requirements&#10;- Fire safety and emergency evacuation procedures&#10;- Regular safety inspections and incident reporting" data-zh-ph="例：&#10;- 包含风险评估的综合现场安全计划&#10;- 为所有工人提供每日安全简报&#10;- 个人防护装备（PPE）要求&#10;- 消防安全和紧急疏散程序&#10;- 定期安全检查和事件报告" placeholder="e.g.&#10;- Comprehensive site safety plan&#10;- Daily safety briefings&#10;- PPE requirements" data-section="construction"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Material Management" data-zh="材料管理">Material Management</label>
+      <div class="field-hint" data-en="Material sourcing, storage, and quality verification" data-zh="材料采购、存储和质量验证">Material sourcing, storage, and quality verification</div>
+      <textarea data-en-ph="e.g.&#10;- Approved material list with specifications and sources&#10;- Material delivery schedule and receiving procedures&#10;- Storage requirements for sensitive materials&#10;- Material quality verification process&#10;- Waste management and recycling plan" data-zh-ph="例：&#10;- 包含规格和来源的批准材料清单&#10;- 材料交付时间表和接收程序&#10;- 敏感材料的存储要求&#10;- 材料质量验证流程&#10;- 废物管理和回收计划" placeholder="e.g.&#10;- Approved material list with specifications&#10;- Material delivery schedule&#10;- Quality verification process" data-section="construction"></textarea>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('content')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('budget')"><span data-en="Next: Budget & Cost Control →" data-zh="下一步：预算与成本控制 →">Next: Budget &amp; Cost Control →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 8: BUDGET & COST CONTROL ══ -->
+<section class="tab-panel" id="tab-budget">
+  <div class="info-box blue">
+    <div class="info-box-title" data-en="Budget Management Note" data-zh="预算管理说明">Budget Management Note</div>
+    <p data-en="A detailed budget breakdown is essential for effective cost control. All budget changes must be documented and approved through the change order process." data-zh="详细的预算分解对于有效成本控制至关重要。所有预算变更必须通过变更单流程记录和审批。">A detailed budget breakdown is essential for effective cost control. All budget changes must be documented and approved through the change order process.</p>
+  </div>
+
+  <div class="section-title" data-en="Budget Breakdown" data-zh="预算分解">Budget Breakdown</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Overall Budget" data-zh="总预算">Overall Budget</label>
+      <div class="field-hint" data-en="Total budget allocated for the project" data-zh="项目分配的总预算">Total budget allocated for the project</div>
+      <input type="text" data-en-ph="e.g. RMB 1,500,000 / USD 220,000" data-zh-ph="例：人民币150万 / 美元22万" placeholder="e.g. RMB 1,500,000 / USD 220,000" data-section="budget">
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Budget Allocation" data-zh="预算分配">Budget Allocation</label>
+      <div class="field-hint" data-en="Breakdown of budget across different project phases and categories" data-zh="不同项目阶段和类别的预算分解">Breakdown of budget across different project phases and categories</div>
+      <textarea class="tall" data-en-ph="e.g.&#10;- Design phase: 15% (RMB 225,000)&#10;- Construction: 65% (RMB 975,000)&#10;- AV & technology: 12% (RMB 180,000)&#10;- Content production: 5% (RMB 75,000)&#10;- Contingency: 3% (RMB 45,000)" data-zh-ph="例：&#10;- 设计阶段：15%（人民币22.5万）&#10;- 施工：65%（人民币97.5万）&#10;- 视听与技术：12%（人民币18万）&#10;- 内容制作：5%（人民币7.5万）&#10;- 应急储备：3%（人民币4.5万）" placeholder="e.g.&#10;- Design phase: 15% (RMB 225,000)&#10;- Construction: 65% (RMB 975,000)&#10;- AV & technology: 12% (RMB 180,000)" data-section="budget"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Cost Control Measures" data-zh="成本控制措施">Cost Control Measures</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Cost Monitoring" data-zh="成本监控">Cost Monitoring</label>
+      <div class="field-hint" data-en="Methods for tracking and monitoring project costs" data-zh="跟踪和监控项目成本的方法">Methods for tracking and monitoring project costs</div>
+      <textarea data-en-ph="e.g.&#10;- Weekly cost reports comparing actual vs budgeted expenditures&#10;- Monthly budget review meetings with stakeholders&#10;- Cost tracking software implementation&#10;- Change order impact analysis for all scope changes&#10;- Regular reconciliation of vendor invoices" data-zh-ph="例：&#10;- 每周成本报告，比较实际支出与预算支出&#10;- 每月与利益相关方举行预算审查会议&#10;- 实施成本跟踪软件&#10;- 所有范围变更的变更单影响分析&#10;- 定期核对供应商发票" placeholder="e.g.&#10;- Weekly cost reports comparing actual vs budgeted&#10;- Monthly budget review meetings&#10;- Cost tracking software" data-section="budget"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Cost Saving Strategies" data-zh="成本节约策略">Cost Saving Strategies</label>
+      <div class="field-hint" data-en="Planned approaches to optimize costs without compromising quality" data-zh="在不影响质量的情况下优化成本的计划方法">Planned approaches to optimize costs without compromising quality</div>
+      <textarea data-en-ph="e.g.&#10;- Value engineering to identify cost-effective alternatives&#10;- Bulk purchasing of materials for better pricing&#10;- phased implementation of high-cost features&#10;- Energy-efficient solutions to reduce operational costs&#10;- Competitive bidding process for major subcontracts" data-zh-ph="例：&#10;- 价值工程，识别成本效益高的替代方案&#10;- 批量采购材料以获得更好的价格&#10;- 分阶段实施高成本功能&#10;- 节能解决方案以降低运营成本&#10;- 主要分包合同的竞争性投标流程" placeholder="e.g.&#10;- Value engineering for cost-effective alternatives&#10;- Bulk purchasing for better pricing&#10;- Phased implementation of high-cost features" data-section="budget"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Change Order Process" data-zh="变更单流程">Change Order Process</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Change Order Procedure" data-zh="变更单程序">Change Order Procedure</label>
+      <div class="field-hint" data-en="Process for requesting, reviewing, and approving changes to the project scope and budget" data-zh="请求、审查和批准项目范围和预算变更的流程">Process for requesting, reviewing, and approving changes to the project scope and budget</div>
+      <textarea data-en-ph="e.g.&#10;1. Change request submitted in writing with justification and impact assessment&#10;2. Cost and schedule impact analysis by project manager&#10;3. Review by technical team for feasibility&#10;4. Approval by budget holder and project sponsor&#10;5. Formal change order documentation issued to contractor&#10;6. Implementation and verification of change" data-zh-ph="例：&#10;1. 以书面形式提交变更请求，包括理由和影响评估&#10;2. 项目经理进行成本和进度影响分析&#10;3. 技术团队审查可行性&#10;4. 预算负责人和项目发起人批准&#10;5. 向承包商发出正式变更单文件&#10;6. 变更的实施和验证" placeholder="e.g.&#10;1. Change request submitted in writing&#10;2. Cost and schedule impact analysis&#10;3. Review by technical team&#10;4. Approval by budget holder" data-section="budget"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Contingency Management" data-zh="应急管理">Contingency Management</label>
+      <div class="field-hint" data-en="Plans for managing unforeseen costs and risks" data-zh="管理不可预见成本和风险的计划">Plans for managing unforeseen costs and risks</div>
+      <textarea data-en-ph="e.g.&#10;- Contingency budget: 3-5% of total budget&#10;- Risk register to track potential cost impacts&#10;- Regular risk review meetings to assess emerging risks&#10;- Clear approval threshold for contingency usage&#10;- Documentation of all contingency expenditures" data-zh-ph="例：&#10;- 应急预算：总预算的3-5%&#10;- 风险登记册，跟踪潜在成本影响&#10;- 定期风险审查会议，评估新出现的风险&#10;- 应急资金使用的明确批准阈值&#10;- 所有应急支出的文档记录" placeholder="e.g.&#10;- Contingency budget: 3-5% of total budget&#10;- Risk register to track potential impacts&#10;- Regular risk review meetings" data-section="budget"></textarea>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('construction')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('risk')"><span data-en="Next: Risk & Contingency →" data-zh="下一步：风险与应急 →">Next: Risk &amp; Contingency →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 9: RISK & CONTINGENCY ══ -->
+<section class="tab-panel" id="tab-risk">
+  <div class="info-box amber">
+    <div class="info-box-title" data-en="Risk Management Note" data-zh="风险管理说明">Risk Management Note</div>
+    <p data-en="Identifying and addressing potential risks early is crucial for project success. A comprehensive risk management plan helps mitigate issues before they impact the project." data-zh="早期识别和解决潜在风险对项目成功至关重要。全面的风险管理计划有助于在问题影响项目之前缓解它们。">Identifying and addressing potential risks early is crucial for project success. A comprehensive risk management plan helps mitigate issues before they impact the project.</p>
+  </div>
+
+  <div class="section-title" data-en="Risk Identification" data-zh="风险识别">Risk Identification</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Project Risks" data-zh="项目风险">Project Risks</label>
+      <div class="field-hint" data-en="Identify potential risks that could impact the project timeline, budget, or quality" data-zh="识别可能影响项目时间表、预算或质量的潜在风险">Identify potential risks that could impact the project timeline, budget, or quality</div>
+      <textarea class="tall" data-en-ph="e.g.&#10;Risk | Likelihood | Impact | Description&#10;------ | ---------- | ------ | -----------&#10;Delay in material delivery | High | Medium | Critical materials may be delayed due to supply chain issues&#10;Scope creep | Medium | High | Client may request additional features not in original brief&#10;Technical issues with AV systems | Medium | High | Complex AV systems may have integration problems&#10;Budget overruns | Medium | High | Unexpected costs may exceed allocated budget&#10;Construction delays | High | Medium | Unforeseen site conditions may delay construction" data-zh-ph="例：&#10;风险 | 可能性 | 影响 | 描述&#10;------ | -------- | ------ | -----------&#10;材料交付延迟 | 高 | 中 | 关键材料可能因供应链问题而延迟&#10;范围蔓延 | 中 | 高 | 客户可能要求原始简报中没有的额外功能&#10;视听系统技术问题 | 中 | 高 | 复杂的视听系统可能存在集成问题&#10;预算超支 | 中 | 高 | 意外成本可能超出分配的预算&#10;施工延迟 | 高 | 中 | 不可预见的现场条件可能延迟施工" placeholder="e.g.&#10;Risk | Likelihood | Impact | Description&#10;------ | ---------- | ------ | -----------&#10;Delay in material delivery | High | Medium | Critical materials may be delayed" data-section="risk"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Risk Mitigation Strategies" data-zh="风险缓解策略">Risk Mitigation Strategies</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Mitigation Plan" data-zh="缓解计划">Mitigation Plan</label>
+      <div class="field-hint" data-en="Strategies to minimize the impact of identified risks" data-zh="最小化已识别风险影响的策略">Strategies to minimize the impact of identified risks</div>
+      <textarea class="tall" data-en-ph="e.g.&#10;Risk | Mitigation Strategy | Responsible Party | Timeline&#10;------ | ------------------ | ---------------- | --------&#10;Delay in material delivery | Identify alternative suppliers, order materials early | Procurement team | Before construction starts&#10;Scope creep | Implement change order process, document all requirements | Project manager | Throughout project&#10;Technical issues with AV systems | Early testing, dedicated AV specialist | AV consultant | Design and installation phases&#10;Budget overruns | Regular cost monitoring, contingency fund | Finance team | Throughout project&#10;Construction delays | Detailed site survey, buffer time in schedule | Construction manager | Pre-construction and execution" data-zh-ph="例：&#10;风险 | 缓解策略 | 负责方 | 时间线&#10;------ | ---------- | -------- | -----------&#10;材料交付延迟 | 确定替代供应商，提前订购材料 | 采购团队 | 施工开始前&#10;范围蔓延 | 实施变更单流程，记录所有要求 | 项目经理 | 整个项目期间&#10;视听系统技术问题 | 早期测试，专用视听专家 | 视听顾问 | 设计和安装阶段&#10;预算超支 | 定期成本监控，应急基金 | 财务团队 | 整个项目期间&#10;施工延迟 | 详细现场勘察，时间表中预留缓冲时间 | 施工经理 | 施工前和执行阶段" placeholder="e.g.&#10;Risk | Mitigation Strategy | Responsible Party | Timeline&#10;------ | ------------------ | ---------------- | --------&#10;Delay in material delivery | Identify alternative suppliers | Procurement team | Before construction" data-section="risk"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Contingency Planning" data-zh="应急规划">Contingency Planning</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Contingency Budget" data-zh="应急预算">Contingency Budget</label>
+      <div class="field-hint" data-en="Budget allocation for unforeseen expenses" data-zh="为不可预见费用分配的预算">Budget allocation for unforeseen expenses</div>
+      <textarea data-en-ph="e.g.&#10;- Overall contingency: 5% of total budget (RMB 75,000)
+- Breakdown:
+  - Material price fluctuations: 2%
+  - Schedule delays: 1.5%
+  - Technical issues: 1%
+  - Other unforeseen: 0.5%" data-zh-ph="例：&#10;- 总应急预算：总预算的5%（人民币7.5万）
+- 细分：
+  - 材料价格波动：2%
+  - 进度延迟：1.5%
+  - 技术问题：1%
+  - 其他不可预见：0.5%" placeholder="e.g.&#10;- Overall contingency: 5% of total budget
+- Material price fluctuations: 2%
+- Schedule delays: 1.5%" data-section="risk"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Contingency Schedule" data-zh="应急时间表">Contingency Schedule</label>
+      <div class="field-hint" data-en="Buffer time allocated for potential delays" data-zh="为潜在延迟分配的缓冲时间">Buffer time allocated for potential delays</div>
+      <textarea data-en-ph="e.g.&#10;- Design phase: 1 week buffer
+- Procurement: 2 weeks buffer
+- Construction: 2 weeks buffer
+- Testing and commissioning: 1 week buffer
+- Total project buffer: 6 weeks" data-zh-ph="例：&#10;- 设计阶段：1周缓冲
+- 采购：2周缓冲
+- 施工：2周缓冲
+- 测试和调试：1周缓冲
+- 项目总缓冲：6周" placeholder="e.g.&#10;- Design phase: 1 week buffer
+- Procurement: 2 weeks buffer
+- Construction: 2 weeks buffer" data-section="risk"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Emergency Response Plan" data-zh="应急响应计划">Emergency Response Plan</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Emergency Procedures" data-zh="应急程序">Emergency Procedures</label>
+      <div class="field-hint" data-en="Procedures to follow in case of emergencies during construction and operation" data-zh="施工和运营期间发生紧急情况时应遵循的程序">Procedures to follow in case of emergencies during construction and operation</div>
+      <textarea data-en-ph="e.g.&#10;Emergency Type | Response Procedure | Responsible Party | Contact Information&#10;--------------- | ------------------ | ---------------- | -------------------&#10;Fire | Activate fire alarm, evacuate building, call emergency services | Site manager | [Phone number]&#10;Injury | Administer first aid, call emergency services if needed | Safety officer | [Phone number]&#10;Security breach | Lock down affected area, contact security, document incident | Security team | [Phone number]&#10;Technical failure | Isolate affected system, notify technical team, implement backup | Technical manager | [Phone number]&#10;Natural disaster | Follow building emergency plan, evacuate if necessary | Building management | [Phone number]" data-zh-ph="例：&#10;紧急情况类型 | 响应程序 | 负责方 | 联系信息&#10;------------ | ---------- | -------- | ------------&#10;火灾 | 激活火灾警报，疏散建筑，呼叫紧急服务 | 现场经理 | [电话号码]&#10; injury | 实施急救，必要时呼叫紧急服务 | 安全官员 | [电话号码]&#10;安全 breach | 封锁受影响区域，联系安全部门，记录事件 | 安全团队 | [电话号码]&#10;技术故障 | 隔离受影响系统，通知技术团队，实施备份 | 技术经理 | [电话号码]&#10;自然灾害 | 遵循建筑应急计划，必要时疏散 | 建筑管理 | [电话号码]" placeholder="e.g.&#10;Emergency Type | Response Procedure | Responsible Party | Contact Information&#10;--------------- | ------------------ | ---------------- | -------------------&#10;Fire | Activate fire alarm, evacuate building | Site manager | [Phone number]" data-section="risk"></textarea>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('budget')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('safety')"><span data-en="Next: Safety & Compliance →" data-zh="下一步：安全与合规 →">Next: Safety &amp; Compliance →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 10: SAFETY & COMPLIANCE ══ -->
+<section class="tab-panel" id="tab-safety">
+  <div class="info-box amber">
+    <div class="info-box-title" data-en="Safety & Compliance Note" data-zh="安全与合规说明">Safety &amp; Compliance Note</div>
+    <p data-en="Compliance with safety regulations and building codes is mandatory. All safety measures must be implemented throughout the project lifecycle." data-zh="遵守安全法规和建筑规范是强制性的。所有安全措施必须在项目生命周期中实施。">Compliance with safety regulations and building codes is mandatory. All safety measures must be implemented throughout the project lifecycle.</p>
+  </div>
+
+  <div class="section-title" data-en="Safety Regulations" data-zh="安全法规">Safety Regulations</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Applicable Safety Standards" data-zh="适用安全标准">Applicable Safety Standards</label>
+      <div class="field-hint" data-en="List of safety standards and regulations that apply to the project" data-zh="适用于项目的安全标准和法规清单">List of safety standards and regulations that apply to the project</div>
+      <textarea data-en-ph="e.g.&#10;- Occupational Safety and Health Administration (OSHA) standards&#10;- National Fire Protection Association (NFPA) codes&#10;- Local building codes and regulations&#10;- Electrical safety standards (NEC or local equivalent)&#10;- Fire safety regulations for public spaces" data-zh-ph="例：&#10;- 职业安全与健康管理局（OSHA）标准&#10;- 国家消防协会（NFPA）规范&#10;- 当地建筑规范和法规&#10;- 电气安全标准（NEC或当地等效标准）&#10;- 公共场所消防安全法规" placeholder="e.g.&#10;- Occupational Safety and Health Administration (OSHA) standards&#10;- National Fire Protection Association (NFPA) codes&#10;- Local building codes" data-section="safety"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Safety Measures" data-zh="安全措施">Safety Measures</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Construction Safety" data-zh="施工安全">Construction Safety</label>
+      <div class="field-hint" data-en="Safety measures to be implemented during construction" data-zh="施工期间实施的安全措施">Safety measures to be implemented during construction</div>
+      <textarea data-en-ph="e.g.&#10;- Personal protective equipment (PPE) requirements for all workers&#10;- Fall protection systems for elevated work&#10;- Hazardous material handling procedures&#10;- Fire prevention measures on site&#10;- Regular safety inspections and training" data-zh-ph="例：&#10;- 所有工人的个人防护装备（PPE）要求&#10;- 高空作业的坠落防护系统&#10;- 危险材料处理程序&#10;- 现场防火措施&#10;- 定期安全检查和培训" placeholder="e.g.&#10;- Personal protective equipment (PPE) requirements&#10;- Fall protection systems for elevated work&#10;- Fire prevention measures" data-section="safety"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Operational Safety" data-zh="运营安全">Operational Safety</label>
+      <div class="field-hint" data-en="Safety measures for the operational phase" data-zh="运营阶段的安全措施">Safety measures for the operational phase</div>
+      <textarea data-en-ph="e.g.&#10;- Fire detection and suppression systems&#10;- Emergency lighting and exit signage&#10;- Access control systems&#10;- First aid stations and equipment&#10;- Regular safety drills and training for staff" data-zh-ph="例：&#10;- 火灾检测和 suppression 系统&#10;- 应急照明和出口标识&#10;- 门禁系统&#10;- 急救站和设备&#10;- 员工定期安全演练和培训" placeholder="e.g.&#10;- Fire detection and suppression systems&#10;- Emergency lighting and exit signage&#10;- Access control systems" data-section="safety"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Compliance Documentation" data-zh="合规文件">Compliance Documentation</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Required Permits and Licenses" data-zh="所需许可证和执照">Required Permits and Licenses</label>
+      <div class="field-hint" data-en="List of permits and licenses needed for the project" data-zh="项目所需的许可证和执照清单">List of permits and licenses needed for the project</div>
+      <textarea data-en-ph="e.g.&#10;- Building permit for construction&#10;- Electrical permit for wiring work&#10;- Fire safety inspection certificate&#10;- Occupancy permit for public use&#10;- Special permits for AV systems or structural changes" data-zh-ph="例：&#10;- 建筑施工许可证&#10;- 电气布线工作许可证&#10;- 消防安全检查证书&#10;- 公共使用占用许可证&#10;- 视听系统或结构变更的特殊许可证" placeholder="e.g.&#10;- Building permit for construction&#10;- Electrical permit for wiring work&#10;- Fire safety inspection certificate" data-section="safety"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Compliance Verification" data-zh="合规验证">Compliance Verification</label>
+      <div class="field-hint" data-en="Process for verifying compliance with safety regulations" data-zh="验证符合安全法规的流程">Process for verifying compliance with safety regulations</div>
+      <textarea data-en-ph="e.g.&#10;- Pre-construction safety plan review&#10;- Regular safety inspections during construction&#10;- Final safety inspection before handover&#10;- Documentation of all safety measures implemented&#10;- Training records for all personnel involved" data-zh-ph="例：&#10;- 施工前安全计划审查&#10;- 施工期间定期安全检查&#10;- 交付前最终安全检查&#10;- 所有实施的安全措施的文档记录&#10;- 所有相关人员的培训记录" placeholder="e.g.&#10;- Pre-construction safety plan review&#10;- Regular safety inspections during construction&#10;- Final safety inspection before handover" data-section="safety"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Accessibility Compliance" data-zh="无障碍合规">Accessibility Compliance</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Accessibility Requirements" data-zh="无障碍要求">Accessibility Requirements</label>
+      <div class="field-hint" data-en="Measures to ensure the hall is accessible to all visitors" data-zh="确保展厅对所有访客无障碍的措施">Measures to ensure the hall is accessible to all visitors</div>
+      <textarea data-en-ph="e.g.&#10;- Wheelchair ramps and accessible entrances&#10;- Elevator access to all levels&#10;- Accessible restrooms&#10;- Braille signage for visually impaired visitors&#10;- Audio descriptions for multimedia displays&#10;- Wide aisles for wheelchair maneuverability" data-zh-ph="例：&#10;- 轮椅坡道和无障碍入口&#10;- 通往所有楼层的电梯通道&#10;- 无障碍卫生间&#10;- 为视障访客提供盲文标识&#10;- 多媒体展示的音频描述&#10;- 宽通道便于轮椅 maneuverability" placeholder="e.g.&#10;- Wheelchair ramps and accessible entrances&#10;- Elevator access to all levels&#10;- Accessible restrooms" data-section="safety"></textarea>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('risk')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('maintenance')"><span data-en="Next: Maintenance & Operations →" data-zh="下一步：维护与运营 →">Next: Maintenance &amp; Operations →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 11: MAINTENANCE & OPERATIONS ══ -->
+<section class="tab-panel" id="tab-maintenance">
+  <div class="info-box blue">
+    <div class="info-box-title" data-en="Maintenance & Operations Note" data-zh="维护与运营说明">Maintenance &amp; Operations Note</div>
+    <p data-en="A comprehensive maintenance and operations plan ensures the exhibition hall remains in optimal condition and continues to deliver its intended experience over time." data-zh="全面的维护和运营计划确保展厅保持最佳状态，并随着时间的推移继续提供其预期的体验。">A comprehensive maintenance and operations plan ensures the exhibition hall remains in optimal condition and continues to deliver its intended experience over time.</p>
+  </div>
+
+  <div class="section-title" data-en="Maintenance Plan" data-zh="维护计划">Maintenance Plan</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Preventive Maintenance" data-zh="预防性维护">Preventive Maintenance</label>
+      <div class="field-hint" data-en="Scheduled maintenance activities to prevent breakdowns" data-zh="定期维护活动以防止故障">Scheduled maintenance activities to prevent breakdowns</div>
+      <textarea data-en-ph="e.g.&#10;- Weekly: Cleaning of all displays and surfaces&#10;- Monthly: Inspection of lighting systems and AV equipment&#10;- Quarterly: HVAC system maintenance and filter replacement&#10;- Semi-annually: Structural inspection and safety checks&#10;- Annually: Full system calibration and testing" data-zh-ph="例：&#10;- 每周：清洁所有展示和表面&#10;- 每月：检查照明系统和视听设备&#10;- 每季度：HVAC系统维护和过滤器更换&#10;- 每半年：结构检查和安全检查&#10;- 每年：全系统校准和测试" placeholder="e.g.&#10;- Weekly: Cleaning of all displays and surfaces&#10;- Monthly: Inspection of lighting systems and AV equipment&#10;- Quarterly: HVAC system maintenance" data-section="maintenance"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Corrective Maintenance" data-zh=" corrective maintenance">Corrective Maintenance</label>
+      <div class="field-hint" data-en="Procedures for addressing breakdowns and repairs" data-zh="处理故障和维修的程序">Procedures for addressing breakdowns and repairs</div>
+      <textarea data-en-ph="e.g.&#10;- 24/7 emergency repair hotline for critical systems&#10;- Response time targets (e.g., 4 hours for AV systems)&#10;- Authorized service providers for specialized equipment&#10;- Spare parts inventory management&#10;- Documentation of all repairs and replacements" data-zh-ph="例：&#10;- 关键系统的24/7紧急维修热线&#10;- 响应时间目标（例如，视听系统4小时）&#10;- 专业设备的授权服务提供商&#10;- 备件库存管理&#10;- 所有维修和更换的文档记录" placeholder="e.g.&#10;- 24/7 emergency repair hotline for critical systems&#10;- Response time targets for repairs&#10;- Authorized service providers" data-section="maintenance"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Operations Management" data-zh="运营管理">Operations Management</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Staffing Requirements" data-zh="人员需求">Staffing Requirements</label>
+      <div class="field-hint" data-en="Personnel needed to operate and maintain the hall" data-zh="操作和维护展厅所需的人员">Personnel needed to operate and maintain the hall</div>
+      <textarea data-en-ph="e.g.&#10;- Exhibition hall manager: Full-time&#10;- Technical support specialist: Part-time (for AV systems)&#10;- Cleaning staff: Daily (part-time)&#10;- Security personnel: During operating hours&#10;- Guest services/guides: As needed for tours" data-zh-ph="例：&#10;- 展厅经理：全职&#10;- 技术支持专员：兼职（负责视听系统）&#10;- 清洁人员：日常（兼职）&#10;- 安保人员：运营时间内&#10;- 客户服务/导览员：根据导览需要" placeholder="e.g.&#10;- Exhibition hall manager: Full-time&#10;- Technical support specialist: Part-time&#10;- Cleaning staff: Daily (part-time)" data-section="maintenance"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Operating Procedures" data-zh="运营程序">Operating Procedures</label>
+      <div class="field-hint" data-en="Standard operating procedures for daily operations" data-zh="日常运营的标准操作程序">Standard operating procedures for daily operations</div>
+      <textarea data-en-ph="e.g.&#10;- Opening and closing procedures&#10;- Visitor registration and check-in process&#10;- Emergency response protocols&#10;- Cleaning and maintenance schedules&#10;- Inventory management for supplies and materials" data-zh-ph="例：&#10;- 开放和关闭程序&#10;- 访客登记和签到流程&#10;- 应急响应协议&#10;- 清洁和维护时间表&#10;- 用品和材料的库存管理" placeholder="e.g.&#10;- Opening and closing procedures&#10;- Visitor registration process&#10;- Emergency response protocols" data-section="maintenance"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Content Management" data-zh="内容管理">Content Management</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Content Update Strategy" data-zh="内容更新策略">Content Update Strategy</label>
+      <div class="field-hint" data-en="Plan for updating and refreshing exhibition content" data-zh="更新和刷新展览内容的计划">Plan for updating and refreshing exhibition content</div>
+      <textarea data-en-ph="e.g.&#10;- Regular content review: Quarterly&#10;- Major content updates: Annually&#10;- Temporary exhibits: Every 3-6 months&#10;- Digital content updates: As needed (e.g., product launches)&#10;- Content management system training for staff" data-zh-ph="例：&#10;- 定期内容审查：每季度&#10;- 重大内容更新：每年&#10;- 临时展览：每3-6个月&#10;- 数字内容更新：根据需要（例如，产品发布）&#10;- 员工内容管理系统培训" placeholder="e.g.&#10;- Regular content review: Quarterly&#10;- Major content updates: Annually&#10;- Temporary exhibits: Every 3-6 months" data-section="maintenance"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Performance Metrics" data-zh="绩效指标">Performance Metrics</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Key Performance Indicators" data-zh="关键绩效指标">Key Performance Indicators</label>
+      <div class="field-hint" data-en="Metrics to measure the success of the exhibition hall" data-zh="衡量展厅成功的指标">Metrics to measure the success of the exhibition hall</div>
+      <textarea data-en-ph="e.g.&#10;- Visitor satisfaction scores (target: 90%+)&#10;- Average visit duration (target: 60+ minutes)&#10;- Number of visitors per month (target: [X])&#10;- Equipment uptime (target: 99.5%+)&#10;- Maintenance response time (target: <4 hours for critical issues)&#10;- Content engagement metrics (e.g., interactive element usage)" data-zh-ph="例：&#10;- 访客满意度得分（目标：90%+）&#10;- 平均访问时长（目标：60+分钟）&#10;- 每月访客数量（目标：[X]）&#10;- 设备正常运行时间（目标：99.5%+）&#10;- 维护响应时间（目标：关键问题<4小时）&#10;- 内容参与度指标（例如，互动元素使用情况）" placeholder="e.g.&#10;- Visitor satisfaction scores (target: 90%+)&#10;- Average visit duration (target: 60+ minutes)&#10;- Number of visitors per month" data-section="maintenance"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Budget for Operations" data-zh="运营预算">Budget for Operations</div>
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Annual Operating Budget" data-zh="年度运营预算">Annual Operating Budget</label>
+      <div class="field-hint" data-en="Budget allocation for ongoing operations and maintenance" data-zh="用于持续运营和维护的预算分配">Budget allocation for ongoing operations and maintenance</div>
+      <textarea data-en-ph="e.g.&#10;- Staffing: 40% (salaries, training)&#10;- Maintenance: 25% (preventive, corrective)&#10;- Utilities: 15% (electricity, HVAC, water)&#10;- Content updates: 10% (digital content, materials)&#10;- Supplies: 5% (cleaning, consumables)&#10;- Contingency: 5%" data-zh-ph="例：&#10;- 人员：40%（工资、培训）&#10;- 维护：25%（预防性、纠正性）&#10;- 公用事业：15%（电力、暖通、水）&#10;- 内容更新：10%（数字内容、材料）&#10;- 用品：5%（清洁、消耗品）&#10;- 应急：5%" placeholder="e.g.&#10;- Staffing: 40% (salaries, training)&#10;- Maintenance: 25% (preventive, corrective)&#10;- Utilities: 15% (electricity, HVAC)" data-section="maintenance"></textarea>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('safety')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('delivery')"><span data-en="Next: Delivery & Approval →" data-zh="下一步：交付与审批 →">Next: Delivery &amp; Approval →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 12: DELIVERY & APPROVAL ══ -->
+<section class="tab-panel" id="tab-delivery">
+  <div class="info-box amber">
+    <div class="info-box-title" data-en="⚠ Revision Policy" data-zh="⚠ 修改政策">⚠ Revision Policy</div>
+    <p data-en="Design revisions are covered at each stage as defined below. Changes to brief scope after sign-off (new zones, structural changes, additional AV elements) are out of scope and require a change order with revised cost and timeline. Construction changes after fabrication begins will incur additional costs." data-zh="设计修改按下方各阶段约定执行。简报签署后提出的范围变更（新增区域、结构变更、额外视听设备）超出约定范围，需签发变更单并调整费用和时间表。施工开始后提出的修改将产生额外费用。">Design revisions are covered at each stage below. Scope changes after sign-off require a change order. Construction changes after fabrication begins incur additional costs.</p>
+  </div>
+  <div class="checkbox-group">
+    <label class="checkbox-item"><input type="checkbox" data-section="delivery"><span class="box"></span><span class="check-label" data-en="I have read and acknowledge the revision policy above." data-zh="我已阅读并知晓上述修改政策。">I have read and acknowledge the revision policy above.</span></label>
+  </div>
+
+  <div class="section-title" data-en="Project Milestones" data-zh="项目里程碑">Project Milestones</div>
+
+  <div style="background:var(--white);border:1.5px solid var(--gray-200);border-radius:10px;overflow:hidden;margin-bottom:24px;">
+    <div style="background:var(--navy);padding:12px 20px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;" data-en="DESIGN PHASE" data-zh="设计阶段">DESIGN PHASE</div>
+    <div style="padding:16px 20px;">
+      <div class="milestone-row">
+        <div class="milestone-label" data-en="Concept Design Due" data-zh="概念设计截止"><span data-en="Concept Design Due" data-zh="概念设计截止">Concept Design Due</span></div>
+        <div class="field-group"><input type="text" data-en-ph="Reviewer name and title" data-zh-ph="审阅人姓名及职务" placeholder="Reviewer name and title" data-section="delivery"></div>
+        <div class="field-group"><input type="date" data-section="delivery"></div>
+      </div>
+      <div class="milestone-row">
+        <div class="milestone-label"><span data-en="Design Development Due" data-zh="深化设计截止">Design Development Due</span></div>
+        <div class="field-group"><input type="text" data-en-ph="Reviewer name and title" data-zh-ph="审阅人姓名及职务" placeholder="Reviewer name and title" data-section="delivery"></div>
+        <div class="field-group"><input type="date" data-section="delivery"></div>
+      </div>
+      <div class="milestone-row">
+        <div class="milestone-label"><span data-en="Final Design Sign-off" data-zh="最终设计签署">Final Design Sign-off</span> <span class="milestone-badge" data-en="GATE" data-zh="关卡">GATE</span></div>
+        <div class="field-group"><input type="text" data-en-ph="Final approver name and title" data-zh-ph="最终审批人姓名及职务" placeholder="Final approver name and title" data-section="delivery"></div>
+        <div class="field-group"><input type="date" data-section="delivery"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--white);border:1.5px solid var(--gray-200);border-radius:10px;overflow:hidden;margin-bottom:24px;">
+    <div style="background:var(--navy);padding:12px 20px;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;" data-en="CONSTRUCTION PHASE" data-zh="施工阶段">CONSTRUCTION PHASE</div>
+    <div style="padding:16px 20px;">
+      <div class="milestone-row">
+        <div class="milestone-label"><span data-en="Construction Start" data-zh="施工开始">Construction Start</span></div>
+        <div class="field-group"><input type="text" data-en-ph="Site manager contact" data-zh-ph="现场负责人联系方式" placeholder="Site manager contact" data-section="delivery"></div>
+        <div class="field-group"><input type="date" data-section="delivery"></div>
+      </div>
+      <div class="milestone-row">
+        <div class="milestone-label"><span data-en="Mid-construction Site Review" data-zh="施工中期现场检查">Mid-construction Site Review</span></div>
+        <div class="field-group"><input type="text" data-en-ph="Reviewer name and title" data-zh-ph="审阅人姓名及职务" placeholder="Reviewer name and title" data-section="delivery"></div>
+        <div class="field-group"><input type="date" data-section="delivery"></div>
+      </div>
+      <div class="milestone-row">
+        <div class="milestone-label"><span data-en="Snag List Inspection" data-zh="验收缺陷清单检查">Snag List Inspection</span> <span class="milestone-badge" data-en="GATE" data-zh="关卡">GATE</span></div>
+        <div class="field-group"><input type="text" data-en-ph="Inspector name and title" data-zh-ph="验收人姓名及职务" placeholder="Inspector name and title" data-section="delivery"></div>
+        <div class="field-group"><input type="date" data-section="delivery"></div>
+      </div>
+      <div class="milestone-row">
+        <div class="milestone-label"><span data-en="Final Handover & Opening" data-zh="最终交付与开幕">Final Handover &amp; Opening</span> <span class="milestone-badge" data-en="GATE" data-zh="关卡">GATE</span></div>
+        <div class="field-group"><input type="text" data-en-ph="Final approver name and title" data-zh-ph="最终审批人姓名及职务" placeholder="Final approver name and title" data-section="delivery"></div>
+        <div class="field-group"><input type="date" data-section="delivery"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Additional Notes" data-zh="补充说明">Additional Notes</label>
+      <textarea data-en-ph="e.g. Opening event is scheduled for [date] — construction must be fully complete and snagged 5 days prior. VIP visitor expected within 2 weeks of opening." data-zh-ph="例：开幕活动定于[日期]——施工须在开幕前5天全部完工并完成验收。开幕后2周内预计有VIP访客到访。" placeholder="e.g. Opening event is on [date] — construction must be complete 5 days prior." data-section="delivery"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Acceptance Standards & Procedures" data-zh="验收标准与程序">Acceptance Standards &amp; Procedures</div>
+  <div class="field-row cols-2">
+    <div class="field-group">
+      <label class="field-label" data-en="Phase Acceptance Standards" data-zh="阶段验收标准">Phase Acceptance Standards</label>
+      <div class="field-hint" data-en="Detailed acceptance criteria for each construction phase" data-zh="各施工阶段的详细验收标准">Detailed acceptance criteria for each construction phase</div>
+      <textarea data-en-ph="e.g.&#10;- Structural phase: all structural elements must comply with design specifications and building codes&#10;- Electrical phase: all circuits tested and certified, no wiring issues&#10;- AV systems: all equipment operational, sound levels within specified range&#10;- Finishes: no defects in paint, flooring, or wall treatments&#10;- Lighting: all fixtures operational, light levels meet design specifications" data-zh-ph="例：&#10;- 结构阶段：所有结构元素必须符合设计规格和建筑规范&#10;- 电气阶段：所有电路测试并认证，无接线问题&#10;- 视听系统：所有设备正常运行，声音水平在规定范围内&#10;- 装修阶段：油漆、 flooring 和墙面处理无缺陷&#10;- 照明：所有灯具正常运行，光照水平符合设计规格" placeholder="e.g.&#10;- Structural phase: comply with design specs and codes&#10;- Electrical phase: all circuits tested and certified&#10;- AV systems: all equipment operational" data-section="delivery"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" data-en="Final Acceptance Process" data-zh="最终验收流程">Final Acceptance Process</label>
+      <div class="field-hint" data-en="Step-by-step process for final acceptance and handover" data-zh="最终验收和交接的分步流程">Step-by-step process for final acceptance and handover</div>
+      <textarea data-en-ph="e.g.&#10;1. Pre-acceptance inspection by contractor (7 days before handover)&#10;2. Snag list creation and review (3 days before handover)&#10;3. Defect rectification by contractor (within 5 days)&#10;4. Final inspection by client and stakeholders&#10;5. Formal acceptance documentation signing&#10;6. Handover of as-built drawings and manuals&#10;7. Training session for facility management" data-zh-ph="例：&#10;1. 承包商预验收检查（交付前7天）&#10;2. 缺陷清单创建和审查（交付前3天）&#10;3. 承包商缺陷整改（5天内）&#10;4. 客户和利益相关方最终检查&#10;5. 正式验收文件签署&#10;6. 竣工图纸和手册交接&#10;7. 设施管理培训课程" placeholder="e.g.&#10;1. Pre-acceptance inspection by contractor&#10;2. Snag list creation and review&#10;3. Defect rectification by contractor&#10;4. Final inspection by client" data-section="delivery"></textarea>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field-group">
+      <label class="field-label" data-en="Acceptance Criteria Matrix" data-zh="验收标准矩阵">Acceptance Criteria Matrix</label>
+      <div class="field-hint" data-en="Comprehensive matrix of验收 items, standards, and pass/fail criteria" data-zh="验收项目、标准和合格/不合格标准的综合矩阵">Comprehensive matrix of acceptance items, standards, and pass/fail criteria</div>
+      <textarea class="tall" data-en-ph="e.g.&#10;Category | Item | Acceptance Standard | Test Method | Pass/Fail Criteria&#10;-------- | ---- | ------------------- | ----------- | ------------------&#10;Structural | Flooring | Level within ±3mm over 2m | Laser level | Pass if within tolerance&#10;Electrical | Power points | All functional, no tripping | Electrical test | Pass if all points work&#10;AV | LED wall | No dead pixels, correct color calibration | Visual inspection & calibration | Pass if no defects&#10;Finishes | Paint | No drips, uniform coverage | Visual inspection | Pass if no visible defects&#10;Lighting | Illuminance | 300-500 lux in general areas | Light meter | Pass if within range" data-zh-ph="例：&#10;类别 | 项目 | 验收标准 | 测试方法 | 合格/不合格标准&#10;------ | ---- | ----------- | ---------- | ---------------&#10;结构 | 地面 | 2米范围内水平误差±3mm | 激光水平仪 | 在公差范围内为合格&#10;电气 | 插座 | 全部功能正常，无跳闸 | 电气测试 | 所有插座工作正常为合格&#10;视听 | LED墙 | 无坏点，色彩校准正确 | 目视检查和校准 | 无缺陷为合格&#10;装修 | 油漆 | 无滴痕，覆盖均匀 | 目视检查 | 无可见缺陷为合格&#10;照明 | 照度 | 一般区域300-500 lux | 照度计 | 在范围内为合格" placeholder="e.g.&#10;Category | Item | Acceptance Standard | Test Method | Pass/Fail Criteria&#10;-------- | ---- | ------------------- | ----------- | ------------------&#10;Structural | Flooring | Level within ±3mm over 2m | Laser level | Pass if within tolerance&#10;Electrical | Power points | All functional | Electrical test | Pass if all work" data-section="delivery"></textarea>
+    </div>
+  </div>
+
+  <div class="section-title" data-en="Final Sign-off" data-zh="最终签字确认">Final Sign-off</div>
+  <p style="font-size:12px;color:var(--gray-600);margin-bottom:16px;" data-en="By completing the fields below, all parties confirm the brief is accurate, complete, and agreed. Design and construction work begins only after all three sign-offs are recorded." data-zh="填写以下内容即表示各方确认简报内容准确、完整且已达成一致。仅在三方均完成签字确认后，设计及施工工作方可开始。">By completing the fields below, all parties confirm the brief is agreed. Work begins only after all sign-offs.</p>
+  <div class="signoff-grid">
+    <div>
+      <div class="signoff-role" data-en="Brand Manager" data-zh="品牌经理">Brand Manager</div>
+      <div class="field-group" style="margin-bottom:10px;">
+        <label class="field-label" style="font-size:8.5px;" data-en="Name" data-zh="姓名">Name</label>
+        <input type="text" data-en-ph="Full name" data-zh-ph="姓名" placeholder="Full name" data-section="delivery">
+      </div>
+      <div class="field-group">
+        <label class="field-label" style="font-size:8.5px;" data-en="Date" data-zh="日期">Date</label>
+        <input type="date" data-section="delivery">
+      </div>
+    </div>
+    <div>
+      <div class="signoff-role" data-en="Brand Director" data-zh="品牌总监">Brand Director</div>
+      <div class="field-group" style="margin-bottom:10px;">
+        <label class="field-label" style="font-size:8.5px;" data-en="Name" data-zh="姓名">Name</label>
+        <input type="text" data-en-ph="Full name" data-zh-ph="姓名" placeholder="Full name" data-section="delivery">
+      </div>
+      <div class="field-group">
+        <label class="field-label" style="font-size:8.5px;" data-en="Date" data-zh="日期">Date</label>
+        <input type="date" data-section="delivery">
+      </div>
+    </div>
+    <div>
+      <div class="signoff-role" data-en="Requester" data-zh="需求方">Requester</div>
+      <div class="field-group" style="margin-bottom:10px;">
+        <label class="field-label" style="font-size:8.5px;" data-en="Name" data-zh="姓名">Name</label>
+        <input type="text" data-en-ph="Full name" data-zh-ph="姓名" placeholder="Full name" data-section="delivery">
+      </div>
+      <div class="field-group">
+        <label class="field-label" style="font-size:8.5px;" data-en="Date" data-zh="日期">Date</label>
+        <input type="date" data-section="delivery">
+      </div>
+    </div>
+  </div>
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('construction')"><span data-en="← Back" data-zh="← 返回">← Back</span></button>
+    <button class="btn btn-primary" onclick="switchTab('revisions')"><span data-en="View Revision Log →" data-zh="查看修改记录 →">View Revision Log →</span></button>
+  </div>
+</section>
+
+<!-- ══ TAB 8: REVISION LOG ══ -->
+<section class="tab-panel" id="tab-revisions">
+  <div class="info-box amber">
+    <div class="info-box-title" data-en="How to Use This Log" data-zh="如何使用修改记录">How to Use This Log</div>
+    <p data-en="Record all design feedback at each stage here before it is passed to the contractor. Feedback must reference the agreed brief — not personal preference. Any feedback that changes the scope must be flagged as a change order." data-zh="在将反馈传达给承包商之前，请在此记录每个阶段的设计反馈。反馈须依据已签署的简报，而非个人喜好。任何改变项目范围的反馈须标记为变更单。">Record all design feedback here before passing to the contractor. Feedback must reference the agreed brief. Scope changes must be flagged as change orders.</p>
+  </div>
+
+  <div class="revision-round">
+    <div class="revision-round-header" data-en="CONCEPT DESIGN REVIEW" data-zh="概念设计评审">CONCEPT DESIGN REVIEW</div>
+    <div class="revision-round-body">
+      <div class="field-row cols-2">
+        <div class="field-group">
+          <label class="field-label" data-en="Date Reviewed" data-zh="评审日期">Date Reviewed</label>
+          <input type="date">
+        </div>
+        <div class="field-group">
+          <label class="field-label" data-en="Reviewed By" data-zh="评审人">Reviewed By</label>
+          <input type="text" data-en-ph="Name and title" data-zh-ph="姓名及职务" placeholder="Name and title">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" data-en="Consolidated Feedback" data-zh="汇总反馈意见">Consolidated Feedback</label>
+          <div class="field-hint" data-en="Reference brief sections. Flag any scope changes separately." data-zh="请注明简报章节依据，范围变更须单独标记。">Reference brief sections. Flag any scope changes separately.</div>
+          <textarea class="tall" data-en-ph="e.g.&#10;- Zone 3 (Technology): the proposed ceiling height of 3m for this zone does not create the 'high-tech' feel described in Section 04. Request a ceiling feature or lighting treatment to differentiate. [Within scope]&#10;- Zone 1 (Welcome): logo application does not meet minimum size requirement stated in Section 04 Mandatory Brand Elements. Must be min. 600mm height. [Within scope]&#10;- CHANGE ORDER REQUEST: client now requires a café corner in Zone 5 — not in original brief. Contractor to quote separately." data-zh-ph="例：&#10;- 第3区（技术区）：该区拟定3米层高未能呈现第04节描述的&amp;quot;高科技感&amp;quot;。建议增加天花板装饰或灯光处理以突出差异。[范围内]&#10;- 第1区（欢迎区）：Logo应用尺寸不符合第04节必须品牌元素中的最小尺寸要求，须达到最小600毫米高度。[范围内]&#10;- 变更单申请：客户现要求在第5区增设咖啡角——不在原始简报范围内，请承包商另行报价。" placeholder="e.g.&#10;- Zone 3: ceiling treatment doesn't achieve 'high-tech' feel from Section 04. [Within scope]&#10;- Zone 1: logo below 600mm minimum from Section 04. [Within scope]&#10;- CHANGE ORDER: café corner requested — not in original brief."></textarea>
+        </div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field-group">
+          <label class="field-label" data-en="Brand Manager Sign-off" data-zh="品牌经理签字确认">Brand Manager Sign-off</label>
+          <input type="text" data-en-ph="Name confirming feedback is complete and within scope" data-zh-ph="姓名，确认反馈完整且在约定范围内" placeholder="Name confirming feedback is complete">
+        </div>
+        <div class="field-group">
+          <label class="field-label" data-en="Date" data-zh="日期">Date</label>
+          <input type="date">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="revision-round">
+    <div class="revision-round-header" data-en="DESIGN DEVELOPMENT REVIEW" data-zh="深化设计评审">DESIGN DEVELOPMENT REVIEW</div>
+    <div class="revision-round-body">
+      <div class="field-row cols-2">
+        <div class="field-group">
+          <label class="field-label" data-en="Date Reviewed" data-zh="评审日期">Date Reviewed</label>
+          <input type="date">
+        </div>
+        <div class="field-group">
+          <label class="field-label" data-en="Reviewed By" data-zh="评审人">Reviewed By</label>
+          <input type="text" data-en-ph="Name and title" data-zh-ph="姓名及职务" placeholder="Name and title">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" data-en="Consolidated Feedback" data-zh="汇总反馈意见">Consolidated Feedback</label>
+          <div class="field-hint" data-en="Final design feedback. Only items not resolved in Concept Review or items deviating from the brief." data-zh="最终设计反馈，仅包含概念评审中未解决的问题或与简报不符的内容。">Final design feedback. Only unresolved concept issues or brief deviations.</div>
+          <textarea class="tall" data-en-ph="List remaining feedback, referencing the brief criteria only." data-zh-ph="仅列出剩余反馈意见，须依据简报评审标准。" placeholder="List remaining feedback, referencing the brief criteria only."></textarea>
+        </div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field-group">
+          <label class="field-label" data-en="Brand Manager Sign-off" data-zh="品牌经理签字确认">Brand Manager Sign-off</label>
+          <input type="text" data-en-ph="Name confirming feedback is complete and within scope" data-zh-ph="姓名，确认反馈完整且在约定范围内" placeholder="Name confirming feedback is complete">
+        </div>
+        <div class="field-group">
+          <label class="field-label" data-en="Date" data-zh="日期">Date</label>
+          <input type="date">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="revision-round">
+    <div class="revision-round-header" data-en="SNAG LIST — POST CONSTRUCTION" data-zh="竣工验收缺陷清单">SNAG LIST — POST CONSTRUCTION</div>
+    <div class="revision-round-body">
+      <div class="field-row cols-2">
+        <div class="field-group">
+          <label class="field-label" data-en="Inspection Date" data-zh="验收日期">Inspection Date</label>
+          <input type="date">
+        </div>
+        <div class="field-group">
+          <label class="field-label" data-en="Inspected By" data-zh="验收人">Inspected By</label>
+          <input type="text" data-en-ph="Name and title" data-zh-ph="姓名及职务" placeholder="Name and title">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" data-en="Snag List Items" data-zh="验收缺陷清单">Snag List Items</label>
+          <div class="field-hint" data-en="List all defects, unfinished items, or deviations from approved design. Include location and priority." data-zh="列出所有缺陷、未完成项或与已审批设计不符的内容，包括位置及优先级。">List all defects or deviations from approved design. Include location and priority.</div>
+          <textarea class="tall" data-en-ph="e.g.&#10;HIGH: Zone 3 — LED video wall has dead pixels in bottom-left corner. Must be replaced before opening. [Contractor to fix by: date]&#10;MEDIUM: Zone 1 — logo vinyl has air bubble. To be re-applied. [Contractor to fix by: date]&#10;LOW: Zone 4 — display plinth screw visible on base. Needs cover plate. [Contractor to fix by: date]" data-zh-ph="例：&#10;高优先级：第3区——LED视频墙左下角有坏点，须在开幕前更换。[承包商修复截止日期：日期]&#10;中优先级：第1区——Logo贴膜有气泡，须重新粘贴。[承包商修复截止日期：日期]&#10;低优先级：第4区——展台底部螺丝外露，需加装盖板。[承包商修复截止日期：日期]" placeholder="e.g.&#10;HIGH: Zone 3 — LED wall has dead pixels. Replace before opening.&#10;MEDIUM: Zone 1 — logo vinyl has air bubble. Re-apply.&#10;LOW: Zone 4 — screw visible on plinth base. Add cover plate."></textarea>
+        </div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field-group">
+          <label class="field-label" data-en="All Snags Resolved — Sign-off" data-zh="所有缺陷已解决——签字确认">All Snags Resolved — Sign-off</label>
+          <input type="text" data-en-ph="Name confirming all snags are resolved" data-zh-ph="姓名，确认所有缺陷已解决" placeholder="Name confirming all snags are resolved">
+        </div>
+        <div class="field-group">
+          <label class="field-label" data-en="Date" data-zh="日期">Date</label>
+          <input type="date">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box green">
+    <div class="info-box-title" data-en="✓ Final Handover" data-zh="✓ 最终交付">✓ Final Handover</div>
+    <p data-en="Once all snag items are resolved and the Final Approver has signed off, the exhibition hall is handed over. The contractor must provide all as-built drawings, manuals, and warranties at this point. The brief is then closed." data-zh="所有缺陷项目解决完毕并经最终审批人签字确认后，展厅正式完成交付。承包商须在此时提供所有竣工图纸、操作手册及质保文件。简报正式关闭。">Once all snags are resolved and the Final Approver signs off, the hall is handed over. Contractor must provide as-built drawings, manuals, and warranties. Brief is then closed.</p>
+  </div>
+
+  <div class="nav-footer">
+    <button class="btn btn-secondary" onclick="switchTab('delivery')"><span data-en="← Back to Delivery" data-zh="← 返回交付与审批">← Back to Delivery</span></button>
+    <button class="btn btn-print" onclick="window.print()"><span data-en="🖨 Print / Save as PDF" data-zh="🖨 打印 / 保存为PDF">🖨 Print / Save as PDF</span></button>
+  </div>
+</section>
+
+</main>
+
+<!-- SAVE BAR -->
+<div id="saveBar" style="position:fixed;bottom:0;left:0;right:0;background:var(--navy);border-top:2px solid var(--gold);padding:10px 32px;display:flex;align-items:center;justify-content:space-between;z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,0.25);">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span id="saveStatus" style="font-size:12px;color:#8888aa;" data-en="No saved data" data-zh="暂无保存数据">No saved data</span>
+    <button class="btn btn-primary" onclick="saveAsHTML()" style="font-size:10px;padding:8px 16px;"><span data-en="💾 Save HTML" data-zh="💾 保存 HTML">💾 Save HTML</span></button>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span style="font-size:11px;color:#555577;" data-en="Data is embedded inside the saved file" data-zh="数据将嵌入保存的文件中">Data is embedded inside the saved file</span>
+    <button class="btn" onclick="clearData()" style="font-size:10px;padding:8px 14px;background:#3a1a1a;color:#ff8888;border:1px solid #662222;"><span data-en="🗑 Clear" data-zh="🗑 清除">🗑 Clear</span></button>
+  </div>
+</div>
+
+<script id="embedded-data" type="application/json"></script>
+
+<script>
+  let currentLang = 'en';
+  let zoneCount = 0;
+
+  // ── ZONE TABLE ──
+  function addZone(nameVal, areaVal, purposeVal, elemVal) {
+    zoneCount++;
+    const n = zoneCount;
+    const tbody = document.getElementById('zoneRows');
+    const tr = document.createElement('tr');
+    tr.id = 'zone_' + n;
+    tr.innerHTML = `
+      <td style="text-align:center;"><div class="zone-num">${n}</div></td>
+      <td><input type="text" id="zone_name_${n}" placeholder="e.g. Welcome Zone" value="${nameVal||''}" oninput="updateProgress()"></td>
+      <td><input type="text" id="zone_area_${n}" placeholder="e.g. 40 m²" value="${areaVal||''}" oninput="updateProgress()"></td>
+      <td><textarea id="zone_purpose_${n}" placeholder="What should the visitor experience here?" oninput="updateProgress()">${purposeVal||''}</textarea></td>
+      <td><textarea id="zone_elem_${n}" placeholder="Products, screens, panels, seating..." oninput="updateProgress()">${elemVal||''}</textarea></td>
+      <td><button class="remove-row" onclick="removeZone(${n})">×</button></td>
+    `;
+    tbody.appendChild(tr);
+    updateProgress();
+  }
+
+  function removeZone(n) {
+    const row = document.getElementById('zone_' + n);
+    if (row) row.remove();
+    updateProgress();
+  }
+
+  function getZonesData() {
+    const zones = [];
+    document.querySelectorAll('#zoneRows tr').forEach(tr => {
+      const id = tr.id.replace('zone_','');
+      zones.push({
+        name: document.getElementById('zone_name_'+id)?.value||'',
+        area: document.getElementById('zone_area_'+id)?.value||'',
+        purpose: document.getElementById('zone_purpose_'+id)?.value||'',
+        elem: document.getElementById('zone_elem_'+id)?.value||''
+      });
+    });
+    return zones;
+  }
+
+  function restoreZones(zones) {
+    document.getElementById('zoneRows').innerHTML='';
+    zoneCount=0;
+    zones.forEach(z => addZone(z.name, z.area, z.purpose, z.elem));
+  }
+
+  // ── LANGUAGE ──
+  function setLang(lang) {
+    currentLang = lang;
+    document.getElementById('btnEN').classList.toggle('active', lang==='en');
+    document.getElementById('btnZH').classList.toggle('active', lang==='zh');
+    document.documentElement.lang = lang==='zh'?'zh':'en';
+    document.querySelectorAll('[data-en]').forEach(el => el.textContent = el.getAttribute('data-'+lang));
+    document.querySelectorAll('[data-en-ph]').forEach(el => {
+      el.placeholder = el.getAttribute('data-'+lang+'-ph')||el.getAttribute('data-en-ph');
+    });
+    document.querySelectorAll('select option[data-en]').forEach(opt => {
+      opt.textContent = opt.getAttribute('data-'+lang);
+    });
+  }
+
+  // ── TABS ──
+  function switchTab(id) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-'+id).classList.add('active');
+    document.querySelector('[data-tab="'+id+'"]').classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+    updateProgress();
+  }
+
+  // ── PROGRESS ──
+  const progressSections = ['basics','visitor','space','design','content','construction','budget','risk','safety','maintenance','delivery'];
+
+  function updateProgress() {
+    let filled = 0;
+    progressSections.forEach(sec => {
+      let has = false;
+      document.querySelectorAll('[data-section="'+sec+'"]').forEach(inp => {
+        if (inp.type==='checkbox' && inp.checked) has=true;
+        if (inp.type!=='checkbox' && inp.value&&inp.value.trim()) has=true;
+        if (inp.tagName==='SELECT' && inp.value) has=true;
+      });
+      if (sec==='space' && document.querySelectorAll('#zoneRows tr').length>0) has=true;
+      if (has) { filled++; document.querySelector('[data-tab="'+sec+'"]').classList.add('filled'); }
+      else { document.querySelector('[data-tab="'+sec+'"]').classList.remove('filled'); }
+    });
+    document.getElementById('progressCount').innerHTML = filled+'<span>/7</span>';
+  }
+
+  // ── DATA ──
+  function assignIndices() {
+    document.querySelectorAll('input[type="text"],input[type="date"],input[type="number"]').forEach((el,i)=>el.dataset.idx='txt_'+i);
+    document.querySelectorAll('textarea').forEach((el,i)=>el.dataset.idx='ta_'+i);
+    document.querySelectorAll('input[type="checkbox"]').forEach((el,i)=>el.dataset.idx='cb_'+i);
+    document.querySelectorAll('select').forEach((el,i)=>el.dataset.idx='sel_'+i);
+  }
+
+  function collectData() {
+    const d={inputs:[],textareas:[],checkboxes:[],selects:[],zones:getZonesData(),lang:currentLang,timestamp:new Date().toISOString()};
+    document.querySelectorAll('input[type="text"],input[type="date"]').forEach(el=>d.inputs.push({idx:el.dataset.idx,value:el.value}));
+    document.querySelectorAll('textarea').forEach(el=>d.textareas.push({idx:el.dataset.idx,value:el.value}));
+    document.querySelectorAll('input[type="checkbox"]').forEach(el=>d.checkboxes.push({idx:el.dataset.idx,checked:el.checked}));
+    document.querySelectorAll('select').forEach(el=>d.selects.push({idx:el.dataset.idx,value:el.value}));
+    return d;
+  }
+
+  function restoreData(d) {
+    if (d.zones && d.zones.length) restoreZones(d.zones);
+    assignIndices();
+    d.inputs.forEach(x=>{const el=document.querySelector('[data-idx="'+x.idx+'"]');if(el)el.value=x.value;});
+    d.textareas.forEach(x=>{const el=document.querySelector('[data-idx="'+x.idx+'"]');if(el)el.value=x.value;});
+    d.checkboxes.forEach(x=>{const el=document.querySelector('[data-idx="'+x.idx+'"]');if(el)el.checked=x.checked;});
+    d.selects.forEach(x=>{const el=document.querySelector('[data-idx="'+x.idx+'"]');if(el)el.value=x.value;});
+    if (d.lang) setLang(d.lang);
+    updateProgress();
+  }
+
+  function saveAsHTML() {
+    const data = collectData();
+    let html = document.documentElement.outerHTML;
+    html = html.replace(
+      /<script id="embedded-data" type="application\/json">[^<]*<\/script>/,
+      '<script id="embedded-data" type="application/json">'+JSON.stringify(data)+'<\/script>'
+    );
+    const projectName = document.querySelector('[data-idx="txt_0"]')?.value||'Exhibition_Hall_Brief';
+    const filename = (projectName.trim()||'Exhibition_Hall_Brief').replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.html';
+    const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
+    URL.revokeObjectURL(url);
+    const s = document.getElementById('saveStatus');
+    s.textContent = currentLang==='zh'?'已保存为 '+filename:'Saved as '+filename;
+    s.style.color='#88cc88';
+  }
+
+  function clearData() {
+    const msg = currentLang==='zh'?'清除所有数据？此操作不可撤销。':'Clear all form data? This cannot be undone.';
+    if (!confirm(msg)) return;
+    document.querySelectorAll('input[type="text"],input[type="date"]').forEach(el=>el.value='');
+    document.querySelectorAll('textarea').forEach(el=>el.value='');
+    document.querySelectorAll('input[type="checkbox"]').forEach(el=>el.checked=false);
+    document.querySelectorAll('select').forEach(el=>el.selectedIndex=0);
+    document.getElementById('zoneRows').innerHTML=''; zoneCount=0;
+    const s=document.getElementById('saveStatus');
+    s.textContent=currentLang==='zh'?'数据已清除':'Data cleared';
+    s.style.color='#ff8888';
+    updateProgress();
+  }
+
+  function backToMain() {
+    window.location.href = 'index.html';
+  }
+
+  window.addEventListener('load', ()=>{
+    assignIndices();
+    try {
+      const embedded = document.getElementById('embedded-data').textContent.trim();
+      if (embedded) {
+        const data = JSON.parse(embedded);
+        restoreData(data);
+        const time = new Date(data.timestamp).toLocaleString();
+        const s = document.getElementById('saveStatus');
+        s.textContent=(data.lang==='zh'?'已恢复，上次保存于 ':'Loaded — last saved ')+time;
+        s.style.color='#e8c547';
+      }
+    } catch(e){}
+  });
+
+  document.addEventListener('input', updateProgress);
+  document.addEventListener('change', updateProgress);
+</script>
+</body>
+</html>

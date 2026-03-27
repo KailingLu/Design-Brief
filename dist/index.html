@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>展厅需求书管理系统</title>
+    <style>
+        :root {
+            --navy: #1a1a2e; --navy-mid: #2a2a4a; --gold: #e8c547;
+            --bg: #f2f1ed; --white: #ffffff;
+            --gray-100: #f7f7f5; --gray-200: #e8e8e4;
+            --gray-400: #b0b0a8; --gray-600: #6b6b65; --gray-800: #333330;
+            --green: #2e7d32; --green-light: #f0f8f0; --green-border: #81c784;
+            --amber-light: #fff8e1; --amber: #f59e0b;
+            --blue-light: #eff6ff; --blue-border: #93c5fd;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: var(--bg); color: var(--gray-800); min-height: 100vh; }
+
+        .site-header { background: var(--navy); border-bottom: 3px solid var(--gold); padding: 24px 48px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+        .header-tag { color: var(--gold); font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+        .header-title { color: var(--white); font-size: 26px; font-weight: 800; }
+        .header-subtitle { color: #8888aa; font-size: 12px; margin-top: 4px; }
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .progress-count { font-size: 34px; font-weight: 800; color: var(--gold); line-height: 1; text-align: right; }
+        .progress-count span { color: #555577; font-size: 17px; }
+        .progress-label { color: #8888aa; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+
+        .lang-toggle { display: flex; border-radius: 5px; overflow: hidden; border: 1.5px solid #444466; }
+        .lang-btn { padding: 5px 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; border: none; cursor: pointer; background: transparent; color: #8888aa; transition: all 0.15s; font-family: Arial, sans-serif; }
+        .lang-btn.active { background: var(--gold); color: var(--navy); }
+
+        .tab-nav { display: flex; gap: 2px; flex-wrap: wrap; }
+        .tab-btn { background: var(--navy-mid); color: #8888aa; border: none; padding: 9px 13px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 4px 4px 0 0; transition: all 0.15s; position: relative; font-family: Arial, sans-serif; }
+        .tab-btn:hover { background: #353560; color: #bbb; }
+        .tab-btn.active { background: var(--bg); color: var(--navy); }
+        .tab-btn.active::after { content:''; position:absolute; bottom:-3px; left:0; right:0; height:3px; background:var(--bg); }
+        .tab-btn .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#444466; margin-right:5px; vertical-align:middle; transition:background 0.2s; }
+        .tab-btn.filled .dot { background: var(--gold); }
+
+        .main { max-width: 900px; margin: 0 auto; padding: 40px 24px 100px; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+
+        .section-title { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--navy); padding-bottom: 8px; border-bottom: 1.5px solid var(--navy); margin: 28px 0 18px; }
+        .section-title:first-child { margin-top: 0; }
+
+        .field-row { display: grid; gap: 16px; margin-bottom: 20px; }
+        .field-row.cols-2 { grid-template-columns: 1fr 1fr; }
+        .field-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .field-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        .field-group { display: flex; flex-direction: column; gap: 6px; }
+
+        label.field-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray-800); display: flex; align-items: center; gap: 6px; }
+        .required-badge { background: var(--navy); color: var(--gold); font-size: 7px; font-weight: 700; padding: 2px 5px; border-radius: 3px; letter-spacing: 1px; }
+        .field-hint { font-size: 11px; color: var(--gray-600); font-style: italic; line-height: 1.4; }
+
+        input[type="text"], input[type="date"], input[type="number"], input[type="password"], textarea, select {
+            background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 6px;
+            padding: 10px 13px; font-family: Arial, sans-serif; font-size: 13px; color: var(--gray-800);
+            transition: border-color 0.15s; width: 100%; resize: vertical;
+        }
+        input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, input[type="password"]:focus, textarea:focus, select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,26,46,0.08); }
+        textarea { min-height: 80px; line-height: 1.5; }
+        textarea.tall { min-height: 120px; }
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b65' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 6px; padding: 8px 13px; cursor: pointer; transition: all 0.15s; user-select: none; }
+        .checkbox-item:hover { border-color: var(--navy); }
+        .checkbox-item input[type="checkbox"] { display: none; }
+        .checkbox-item .box { width:16px; height:16px; border:1.5px solid var(--gray-400); border-radius:3px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; color:transparent; transition:all 0.15s; }
+        .checkbox-item input:checked ~ .box { background:var(--navy); border-color:var(--navy); color:var(--gold); }
+        .checkbox-item input:checked ~ .box::after { content:'✓'; }
+        .checkbox-item .check-label { font-size: 12.5px; }
+        .checkbox-item:has(input:checked) { border-color:var(--navy); background:#f0f0f8; }
+        .checkbox-item:has(input:checked) .check-label { font-weight: 600; }
+
+        .info-box { border-radius:8px; padding:16px 20px; margin-bottom:24px; border:1.5px solid; }
+        .info-box.amber { background:var(--amber-light); border-color:var(--amber); }
+        .info-box.green { background:var(--green-light); border-color:var(--green-border); }
+        .info-box.blue { background:var(--blue-light); border-color:var(--blue-border); }
+        .info-box-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+        .info-box.amber .info-box-title { color:#92400e; }
+        .info-box.green .info-box-title { color:var(--green); }
+        .info-box.blue .info-box-title { color:#1d4ed8; }
+        .info-box p { font-size:13px; line-height:1.6; }
+
+        .btn { padding:12px 24px; border-radius:6px; font-family:Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border:none; transition:all 0.15s; }
+        .btn-secondary { background:var(--white); border:1.5px solid var(--gray-200); color:var(--gray-600); }
+        .btn-secondary:hover { border-color:var(--navy); color:var(--navy); }
+        .btn-primary { background:var(--navy); color:var(--gold); }
+        .btn-primary:hover { background:#2a2a4e; }
+        .btn-print { background:var(--gold); color:var(--navy); }
+
+        .nav-footer { display:flex; justify-content:space-between; align-items:center; margin-top:40px; padding-top:24px; border-top:1.5px solid var(--gray-200); }
+
+        /* 登录注册页面样式 */
+        .auth-container { max-width: 400px; margin: 100px auto; padding: 40px; background: var(--white); border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        .auth-title { font-size: 18px; font-weight: 800; color: var(--navy); margin-bottom: 24px; text-align: center; }
+        .auth-form { display: flex; flex-direction: column; gap: 16px; }
+        .auth-btn { width: 100%; margin-top: 8px; }
+        .auth-switch { text-align: center; margin-top: 16px; font-size: 12px; color: var(--gray-600); }
+        .auth-switch a { color: var(--navy); text-decoration: none; font-weight: 600; }
+        .auth-switch a:hover { text-decoration: underline; }
+        .error-message { color: #d32f2f; font-size: 11px; margin-top: 4px; }
+
+        /* 项目管理页面样式 */
+        .project-card { background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 16px; transition: all 0.15s; cursor: pointer; }
+        .project-card:hover { border-color: var(--navy); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .project-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+        .project-meta { font-size: 11px; color: var(--gray-600); margin-bottom: 12px; }
+        .project-actions { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; font-size: 10px; }
+
+        /* 权限管理页面样式 */
+        .user-card { background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+        .user-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .user-name { font-size: 14px; font-weight: 700; color: var(--navy); }
+        .role-select { width: 150px; }
+        .permission-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+        .permission-item { display: flex; align-items: center; gap: 8px; }
+
+        @media (max-width:640px) {
+            .field-row.cols-2,.field-row.cols-3,.field-row.cols-4 { grid-template-columns: 1fr; }
+            .signoff-grid { grid-template-columns: 1fr; }
+            .milestone-row { grid-template-columns: 1fr; }
+            .site-header { padding:20px 16px 0; }
+            .main { padding:24px 16px 100px; }
+            .auth-container { margin: 50px 20px; padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div id="loginPanel" class="auth-container" style="display: block;">
+        <h2 class="auth-title">登录</h2>
+        <form class="auth-form" onsubmit="handleLogin(event)">
+            <div class="field-group">
+                <label class="field-label">用户名</label>
+                <input type="text" id="loginUsername" placeholder="请输入用户名">
+            </div>
+            <div class="field-group">
+                <label class="field-label">密码</label>
+                <input type="password" id="loginPassword" placeholder="请输入密码">
+            </div>
+            <div class="error-message" id="loginError"></div>
+            <button type="submit" class="btn btn-primary auth-btn">登录</button>
+            <div class="auth-switch">
+                还没有账号？ <a href="#" onclick="showRegister()">立即注册</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- 注册页面 -->
+    <div id="registerPanel" class="auth-container" style="display: none;">
+        <h2 class="auth-title">注册</h2>
+        <form class="auth-form" onsubmit="handleRegister(event)">
+            <div class="field-group">
+                <label class="field-label">用户名</label>
+                <input type="text" id="registerUsername" placeholder="请输入用户名">
+            </div>
+            <div class="field-group">
+                <label class="field-label">密码</label>
+                <input type="password" id="registerPassword" placeholder="请输入密码">
+            </div>
+            <div class="field-group">
+                <label class="field-label">确认密码</label>
+                <input type="password" id="registerConfirmPassword" placeholder="请确认密码">
+            </div>
+            <div class="field-group">
+                <label class="field-label">角色</label>
+                <select id="registerRole">
+                    <option value="admin">管理员</option>
+                    <option value="user">普通用户</option>
+                </select>
+            </div>
+            <div class="error-message" id="registerError"></div>
+            <button type="submit" class="btn btn-primary auth-btn">注册</button>
+            <div class="auth-switch">
+                已有账号？ <a href="#" onclick="showLogin()">立即登录</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="app" style="display: none;">
+        <header class="site-header">
+            <div class="header-top">
+                <div>
+                    <div class="header-tag">品牌部</div>
+                    <div class="header-title">展厅需求书管理系统</div>
+                    <div class="header-subtitle">管理展厅项目和需求书</div>
+                </div>
+                <div class="header-right">
+                    <div class="lang-toggle">
+                        <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+                        <button class="lang-btn" id="btnZH" onclick="setLang('zh')">中文</button>
+                    </div>
+                    <div>
+                        <span id="userInfo" style="color: var(--gold); font-size: 12px;"></span>
+                        <button class="btn btn-secondary" style="margin-top: 8px; font-size: 10px; padding: 6px 12px;" onclick="logout()">退出登录</button>
+                    </div>
+                </div>
+            </div>
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="projects" onclick="switchTab('projects')">项目管理</button>
+                <button class="tab-btn" data-tab="create" onclick="switchTab('create')">创建需求书</button>
+                <button class="tab-btn" data-tab="users" onclick="switchTab('users')">权限管理</button>
+            </nav>
+        </header>
+
+        <main class="main">
+            <!-- 项目管理页面 -->
+            <section class="tab-panel active" id="tab-projects">
+                <div class="section-title">项目列表</div>
+                <div id="projectList">
+                    <!-- 项目卡片将通过JavaScript动态生成 -->
+                </div>
+                <div class="nav-footer">
+                    <div></div>
+                    <button class="btn btn-primary" onclick="switchTab('create')">创建新项目</button>
+                </div>
+            </section>
+
+            <!-- 创建需求书页面 -->
+            <section class="tab-panel" id="tab-create">
+                <div class="section-title">创建展厅需求书</div>
+                <div class="field-row">
+                    <div class="field-group">
+                        <label class="field-label">项目名称 <span class="required-badge">必填</span></label>
+                        <input type="text" id="projectName" placeholder="请输入项目名称">
+                    </div>
+                </div>
+                <div class="field-row cols-2">
+                    <div class="field-group">
+                        <label class="field-label">创建日期</label>
+                        <input type="date" id="createDate" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">负责人</label>
+                        <input type="text" id="projectOwner" placeholder="请输入负责人姓名">
+                    </div>
+                </div>
+                <div class="nav-footer">
+                    <button class="btn btn-secondary" onclick="switchTab('projects')">取消</button>
+                    <button class="btn btn-primary" onclick="createProject()">创建并编辑</button>
+                </div>
+            </section>
+
+            <!-- 权限管理页面 -->
+            <section class="tab-panel" id="tab-users">
+                <div class="section-title">用户管理</div>
+                <div id="userList">
+                    <!-- 用户卡片将通过JavaScript动态生成 -->
+                </div>
+                <div class="nav-footer">
+                    <div></div>
+                    <button class="btn btn-primary" onclick="addUser()">添加用户</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 需求书编辑页面 -->
+    <div id="editor" style="display: none;">
+        <!-- 这里将包含完整的需求书编辑内容 -->
+    </div>
+
+    <script>
+        let currentLang = 'zh';
+        let currentUser = null;
+        let projects = [];
+        let users = [];
+
+        // 初始化数据
+        function initData() {
+            // 检查本地存储中的数据
+            const storedUsers = localStorage.getItem('users');
+            const storedProjects = localStorage.getItem('projects');
+
+            if (storedUsers) {
+                users = JSON.parse(storedUsers);
+            } else {
+                // 默认管理员用户
+                users = [{
+                    id: 1,
+                    username: 'admin',
+                    password: 'admin123',
+                    role: 'admin',
+                    permissions: ['manage_projects', 'create_projects', 'edit_projects', 'manage_users']
+                }];
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+
+            if (storedProjects) {
+                projects = JSON.parse(storedProjects);
+            } else {
+                projects = [];
+                localStorage.setItem('projects', JSON.stringify(projects));
+            }
+        }
+
+        // 登录处理
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorElement = document.getElementById('loginError');
+
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                currentUser = user;
+                document.getElementById('userInfo').textContent = `欢迎，${user.username} (${user.role === 'admin' ? '管理员' : '用户'})`;
+                document.getElementById('loginPanel').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                loadProjects();
+                loadUsers();
+            } else {
+                errorElement.textContent = '用户名或密码错误';
+            }
+        }
+
+        // 注册处理
+        function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            const role = document.getElementById('registerRole').value;
+            const errorElement = document.getElementById('registerError');
+
+            if (password !== confirmPassword) {
+                errorElement.textContent = '两次输入的密码不一致';
+                return;
+            }
+
+            if (users.find(u => u.username === username)) {
+                errorElement.textContent = '用户名已存在';
+                return;
+            }
+
+            const newUser = {
+                id: users.length + 1,
+                username: username,
+                password: password,
+                role: role,
+                permissions: role === 'admin' ? 
+                    ['manage_projects', 'create_projects', 'edit_projects', 'manage_users'] : 
+                    ['create_projects', 'edit_projects']
+            };
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            showLogin();
+        }
+
+        // 显示登录页面
+        function showLogin() {
+            document.getElementById('registerPanel').style.display = 'none';
+            document.getElementById('loginPanel').style.display = 'block';
+        }
+
+        // 显示注册页面
+        function showRegister() {
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('registerPanel').style.display = 'block';
+        }
+
+        // 退出登录
+        function logout() {
+            currentUser = null;
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('loginPanel').style.display = 'block';
+        }
+
+        // 切换标签页
+        function switchTab(id) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-'+id).classList.add('active');
+            document.querySelector('[data-tab="'+id+'"]').classList.add('active');
+            window.scrollTo({top:0, behavior:'smooth'});
+        }
+
+        // 加载项目列表
+        function loadProjects() {
+            const projectList = document.getElementById('projectList');
+            projectList.innerHTML = '';
+
+            if (projects.length === 0) {
+                projectList.innerHTML = '<p style="text-align: center; color: var(--gray-600); margin-top: 40px;">暂无项目</p>';
+                return;
+            }
+
+            projects.forEach(project => {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.innerHTML = `
+                    <div class="project-title">${project.name}</div>
+                    <div class="project-meta">
+                        创建日期: ${project.createdDate} | 负责人: ${project.owner}
+                    </div>
+                    <div class="project-actions">
+                        <button class="btn btn-sm btn-primary" onclick="editProject(${project.id})">编辑</button>
+                        <button class="btn btn-sm btn-secondary" onclick="deleteProject(${project.id})">删除</button>
+                    </div>
+                `;
+                projectList.appendChild(card);
+            });
+        }
+
+        // 加载用户列表
+        function loadUsers() {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+
+            users.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'user-card';
+                card.innerHTML = `
+                    <div class="user-header">
+                        <div class="user-name">${user.username}</div>
+                        <select class="role-select" onchange="updateUserRole(${user.id}, this.value)">
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员</option>
+                            <option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户</option>
+                        </select>
+                    </div>
+                    <div class="permission-grid">
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm_${user.id}_manage_projects" ${user.permissions.includes('manage_projects') ? 'checked' : ''} onchange="updateUserPermission(${user.id}, 'manage_projects', this.checked)">
+                            <label for="perm_${user.id}_manage_projects">管理项目</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm_${user.id}_create_projects" ${user.permissions.includes('create_projects') ? 'checked' : ''} onchange="updateUserPermission(${user.id}, 'create_projects', this.checked)">
+                            <label for="perm_${user.id}_create_projects">创建项目</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm_${user.id}_edit_projects" ${user.permissions.includes('edit_projects') ? 'checked' : ''} onchange="updateUserPermission(${user.id}, 'edit_projects', this.checked)">
+                            <label for="perm_${user.id}_edit_projects">编辑项目</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm_${user.id}_manage_users" ${user.permissions.includes('manage_users') ? 'checked' : ''} onchange="updateUserPermission(${user.id}, 'manage_users', this.checked)">
+                            <label for="perm_${user.id}_manage_users">管理用户</label>
+                        </div>
+                    </div>
+                `;
+                userList.appendChild(card);
+            });
+        }
+
+        // 创建项目
+        function createProject() {
+            const name = document.getElementById('projectName').value;
+            const createdDate = document.getElementById('createDate').value;
+            const owner = document.getElementById('projectOwner').value;
+
+            if (!name) {
+                alert('请输入项目名称');
+                return;
+            }
+
+            const newProject = {
+                id: projects.length + 1,
+                name: name,
+                createdDate: createdDate,
+                owner: owner,
+                lastModified: createdDate,
+                status: 'in_progress'
+            };
+
+            projects.push(newProject);
+            localStorage.setItem('projects', JSON.stringify(projects));
+
+            // 跳转到需求书编辑页面
+            editProject(newProject.id);
+        }
+
+        // 编辑项目
+        function editProject(projectId) {
+            // 这里可以加载完整的需求书编辑页面
+            // 为了简化，我们暂时使用原有的HTML模板
+            window.location.href = `Exhibition_Hall_Brief.html?projectId=${projectId}`;
+        }
+
+        // 删除项目
+        function deleteProject(projectId) {
+            if (confirm('确定要删除这个项目吗？')) {
+                projects = projects.filter(p => p.id !== projectId);
+                localStorage.setItem('projects', JSON.stringify(projects));
+                loadProjects();
+            }
+        }
+
+        // 添加用户
+        function addUser() {
+            const username = prompt('请输入用户名');
+            const password = prompt('请输入密码');
+            const role = prompt('请输入角色 (admin/user)');
+
+            if (username && password && role) {
+                if (users.find(u => u.username === username)) {
+                    alert('用户名已存在');
+                    return;
+                }
+
+                const newUser = {
+                    id: users.length + 1,
+                    username: username,
+                    password: password,
+                    role: role,
+                    permissions: role === 'admin' ? 
+                        ['manage_projects', 'create_projects', 'edit_projects', 'manage_users'] : 
+                        ['create_projects', 'edit_projects']
+                };
+
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                loadUsers();
+            }
+        }
+
+        // 更新用户角色
+        function updateUserRole(userId, role) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                user.role = role;
+                user.permissions = role === 'admin' ? 
+                    ['manage_projects', 'create_projects', 'edit_projects', 'manage_users'] : 
+                    ['create_projects', 'edit_projects'];
+                localStorage.setItem('users', JSON.stringify(users));
+                loadUsers();
+            }
+        }
+
+        // 更新用户权限
+        function updateUserPermission(userId, permission, checked) {
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                if (checked) {
+                    if (!user.permissions.includes(permission)) {
+                        user.permissions.push(permission);
+                    }
+                } else {
+                    user.permissions = user.permissions.filter(p => p !== permission);
+                }
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+        }
+
+        // 设置语言
+        function setLang(lang) {
+            currentLang = lang;
+            document.getElementById('btnEN').classList.toggle('active', lang==='en');
+            document.getElementById('btnZH').classList.toggle('active', lang==='zh');
+            document.documentElement.lang = lang==='zh'?'zh':'en';
+            
+            // 这里可以添加语言切换逻辑
+        }
+
+        // 初始化
+        initData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+[
+  {
+    "_id": 1,
+    "name": "测试用户",
+    "email": "test@example.com",
+    "password": "$2a$10$x.MR2WogeLe09WWq9U9z4OGF3uPJLZ/62Gi/rOd8WFvFEDP1vuKni",
+    "role": "1",
+    "createdAt": "2026-03-27T07:50:55.857Z"
+  },
+  {
+    "_id": 3,
+    "name": "管理员",
+    "email": "admin@example.com",
+    "password": "$2a$10$3y7hSiuDOHJ25ZxCxVEPBO/B0jAX0A2hDLZUNrcNH8CZwMpxG5tdS",
+    "role": "2",
+    "createdAt": "2026-03-27T07:50:56.085Z"
+  },
+  {
+    "_id": 17,
+    "name": "测试成员",
+    "email": "member@example.com",
+    "password": "$2a$10$6VWpxPc9zrPD.KywKrMZbu3MDyVyDbAW1LelBGmCsxd7OSpzNiBKK",
+    "role": "1",
+    "createdAt": "2026-03-27T07:50:56.547Z"
+  }
+]
